@@ -110,7 +110,7 @@ def organize(
     # Configure logging first
     configure_logging(verbose=verbose, json_output=json_logs)
     logger = get_logger(__name__)
-    
+
     # Log startup
     logger.info(
         "Starting OMBM",
@@ -123,7 +123,7 @@ def organize(
         json_output=json_out,
         profile_enabled=profile,
     )
-    
+
     console.print("🔖 OMBM - Organize My Bookmarks")
     console.print(f"Version: {__version__}")
 
@@ -157,7 +157,7 @@ def organize(
     # TODO: Implement actual bookmark organization logic
     console.print("\n🚧 Core functionality not yet implemented")
     console.print("This is a placeholder for the bookmark organization pipeline.")
-    
+
     logger.info("Core functionality placeholder - implementation pending")
 
 

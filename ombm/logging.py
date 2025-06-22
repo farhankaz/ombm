@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import structlog
 
@@ -16,11 +16,11 @@ def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
     """
     # Set log level based on verbosity
     log_level = logging.DEBUG if verbose else logging.INFO
-    
+
     # Clear any existing handlers
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
-    
+
     # Configure structlog processors
     processors = [
         structlog.stdlib.filter_by_level,
@@ -32,7 +32,7 @@ def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
     ]
-    
+
     if json_output:
         # JSON output for programmatic consumption
         processors.append(structlog.processors.JSONRenderer())
@@ -41,7 +41,7 @@ def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
         processors.append(
             structlog.dev.ConsoleRenderer(colors=sys.stderr.isatty())
         )
-    
+
     # Configure structlog
     structlog.configure(
         processors=processors,
@@ -49,11 +49,11 @@ def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     # Configure standard library logging
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(logging.Formatter("%(message)s"))
-    
+
     root_logger.addHandler(handler)
     root_logger.setLevel(log_level)
 
@@ -139,10 +139,10 @@ def log_performance_metrics(
         "items_processed": items_processed,
         **kwargs
     }
-    
+
     if items_processed > 0:
         metrics["items_per_second"] = round(items_processed / duration, 2)
-    
+
     logger.info("Performance metrics", **metrics)
 
 
