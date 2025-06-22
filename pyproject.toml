@@ -59,7 +59,7 @@ test = [
 ]
 
 [project.scripts]
-ombm = "ombm.__main__:main"
+ombm = "ombm.__main__:app"
 
 [project.urls]
 Homepage = "https://github.com/farhankazmi/ombm"
