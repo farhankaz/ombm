@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ScraperError(Exception):
     """Base exception for scraper-related errors."""
+
     pass
 
 
@@ -99,11 +100,7 @@ class PlaywrightScraper:
 
             await page.close()
 
-            result = ScrapeResult(
-                url=url,
-                text=text_content,
-                html_title=html_title
-            )
+            result = ScrapeResult(url=url, text=text_content, html_title=html_title)
 
             logger.debug(f"Successfully scraped {len(text_content)} chars from {url}")
             return result
@@ -128,8 +125,8 @@ class PlaywrightScraper:
             readable_html = doc.summary()
 
             # Convert to plain text using BeautifulSoup
-            soup = BeautifulSoup(readable_html, 'html.parser')
-            text = soup.get_text(separator=' ', strip=True)
+            soup = BeautifulSoup(readable_html, "html.parser")
+            text = soup.get_text(separator=" ", strip=True)
 
             # Truncate to 10k chars as per spec
             if len(text) > 10000:
@@ -140,8 +137,8 @@ class PlaywrightScraper:
         except Exception as e:
             logger.warning(f"Failed to extract readable text: {e}")
             # Fallback to basic text extraction
-            soup = BeautifulSoup(html_content, 'html.parser')
-            text = soup.get_text(separator=' ', strip=True)
+            soup = BeautifulSoup(html_content, "html.parser")
+            text = soup.get_text(separator=" ", strip=True)
             return text[:10000] + "..." if len(text) > 10000 else text
 
 
@@ -168,9 +165,7 @@ class HTTPXScraper:
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                headers = {
-                    "User-Agent": "OMBM/1.0 (macOS) Mozilla/5.0 (compatible)"
-                }
+                headers = {"User-Agent": "OMBM/1.0 (macOS) Mozilla/5.0 (compatible)"}
 
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
@@ -178,19 +173,17 @@ class HTTPXScraper:
                 html_content = response.text
 
                 # Extract title and readable content
-                soup = BeautifulSoup(html_content, 'html.parser')
+                soup = BeautifulSoup(html_content, "html.parser")
                 html_title = soup.title.string.strip() if soup.title else ""
 
                 # Extract readable text
                 text_content = self._extract_readable_text(html_content)
 
-                result = ScrapeResult(
-                    url=url,
-                    text=text_content,
-                    html_title=html_title
-                )
+                result = ScrapeResult(url=url, text=text_content, html_title=html_title)
 
-                logger.debug(f"Successfully scraped {len(text_content)} chars from {url}")
+                logger.debug(
+                    f"Successfully scraped {len(text_content)} chars from {url}"
+                )
                 return result
 
         except httpx.HTTPStatusError as e:
@@ -219,8 +212,8 @@ class HTTPXScraper:
             readable_html = doc.summary()
 
             # Convert to plain text using BeautifulSoup
-            soup = BeautifulSoup(readable_html, 'html.parser')
-            text = soup.get_text(separator=' ', strip=True)
+            soup = BeautifulSoup(readable_html, "html.parser")
+            text = soup.get_text(separator=" ", strip=True)
 
             # Truncate to 10k chars as per spec
             if len(text) > 10000:
@@ -231,8 +224,8 @@ class HTTPXScraper:
         except Exception as e:
             logger.warning(f"Failed to extract readable text: {e}")
             # Fallback to basic text extraction
-            soup = BeautifulSoup(html_content, 'html.parser')
-            text = soup.get_text(separator=' ', strip=True)
+            soup = BeautifulSoup(html_content, "html.parser")
+            text = soup.get_text(separator=" ", strip=True)
             return text[:10000] + "..." if len(text) > 10000 else text
 
 
@@ -241,10 +234,12 @@ class WebScraper:
     Main scraper class that combines Playwright and HTTPX with fallback logic.
     """
 
-    def __init__(self,
-                 playwright_timeout: int = 30000,
-                 httpx_timeout: int = 30,
-                 use_playwright: bool = True):
+    def __init__(
+        self,
+        playwright_timeout: int = 30000,
+        httpx_timeout: int = 30,
+        use_playwright: bool = True,
+    ):
         self.playwright_timeout = playwright_timeout
         self.httpx_timeout = httpx_timeout
         self.use_playwright = use_playwright

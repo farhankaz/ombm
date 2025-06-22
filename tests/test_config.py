@@ -155,7 +155,7 @@ default_workers = 8
         assert "[openai]" in content
         assert "[scraping]" in content
         assert "[concurrency]" in content
-        assert "model = \"gpt-4o\"" in content
+        assert 'model = "gpt-4o"' in content
 
     def test_create_default_config_directory_creation(self, tmp_path):
         """Test that config directory is created if it doesn't exist."""
@@ -184,16 +184,9 @@ default_workers = 8
         """Test dictionary merging functionality."""
         loader = ConfigLoader()
 
-        base = {
-            "a": 1,
-            "b": {"x": 2, "y": 3},
-            "c": 4
-        }
+        base = {"a": 1, "b": {"x": 2, "y": 3}, "c": 4}
 
-        override = {
-            "b": {"x": 20, "z": 30},
-            "d": 5
-        }
+        override = {"b": {"x": 20, "z": 30}, "d": 5}
 
         result = loader._merge_dicts(base, override)
 
@@ -324,8 +317,7 @@ class TestIntegration:
         # 3. Modify file and reload
         config_content = config_path.read_text()
         modified_content = config_content.replace(
-            'model = "gpt-4o"',
-            'model = "gpt-3.5-turbo"'
+            'model = "gpt-4o"', 'model = "gpt-3.5-turbo"'
         )
         config_path.write_text(modified_content)
 

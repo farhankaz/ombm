@@ -134,7 +134,9 @@ def organize(
         console.print("🔍 Running in dry-run mode (no changes will be made)")
         logger.info("Running in dry-run mode")
 
-    console.print(f"Max bookmarks: {max_bookmarks if max_bookmarks > 0 else 'unlimited'}")
+    console.print(
+        f"Max bookmarks: {max_bookmarks if max_bookmarks > 0 else 'unlimited'}"
+    )
     console.print(f"Concurrency: {concurrency}")
     console.print(f"Model: {model}")
 

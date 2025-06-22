@@ -30,7 +30,8 @@ class CacheManager:
             return
 
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS scrape_results (
                     url_hash TEXT PRIMARY KEY,
                     url TEXT NOT NULL,
@@ -38,9 +39,11 @@ class CacheManager:
                     html_title TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS llm_metadata (
                     url_hash TEXT PRIMARY KEY,
                     url TEXT NOT NULL,
@@ -49,11 +52,16 @@ class CacheManager:
                     tokens_used INTEGER NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Create indices for better query performance
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_scrape_url ON scrape_results(url)")
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_llm_url ON llm_metadata(url)")
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_scrape_url ON scrape_results(url)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_llm_url ON llm_metadata(url)"
+            )
 
             await db.commit()
 
@@ -61,7 +69,7 @@ class CacheManager:
 
     def _hash_url(self, url: str) -> str:
         """Generate hash for URL to use as cache key."""
-        return hashlib.sha256(url.encode('utf-8')).hexdigest()
+        return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
     async def get_scrape_result(self, url: str) -> ScrapeResult | None:
         """Retrieve cached scrape result for URL.
@@ -75,17 +83,16 @@ class CacheManager:
         await self.initialize()
         url_hash = self._hash_url(url)
 
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT url, text, html_title FROM scrape_results WHERE url_hash = ?",
-            (url_hash,)
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT url, text, html_title FROM scrape_results WHERE url_hash = ?",
+                (url_hash,),
+            ) as cursor,
+        ):
             row = await cursor.fetchone()
             if row:
-                return ScrapeResult(
-                    url=row[0],
-                    text=row[1],
-                    html_title=row[2]
-                )
+                return ScrapeResult(url=row[0], text=row[1], html_title=row[2])
         return None
 
     async def store_scrape_result(self, result: ScrapeResult) -> None:
@@ -98,11 +105,14 @@ class CacheManager:
         url_hash = self._hash_url(result.url)
 
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("""
+            await db.execute(
+                """
                 INSERT OR REPLACE INTO scrape_results
                 (url_hash, url, text, html_title)
                 VALUES (?, ?, ?, ?)
-            """, (url_hash, result.url, result.text, result.html_title))
+            """,
+                (url_hash, result.url, result.text, result.html_title),
+            )
             await db.commit()
 
     async def get_llm_metadata(self, url: str) -> LLMMetadata | None:
@@ -117,17 +127,17 @@ class CacheManager:
         await self.initialize()
         url_hash = self._hash_url(url)
 
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT url, name, description, tokens_used FROM llm_metadata WHERE url_hash = ?",
-            (url_hash,)
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT url, name, description, tokens_used FROM llm_metadata WHERE url_hash = ?",
+                (url_hash,),
+            ) as cursor,
+        ):
             row = await cursor.fetchone()
             if row:
                 return LLMMetadata(
-                    url=row[0],
-                    name=row[1],
-                    description=row[2],
-                    tokens_used=row[3]
+                    url=row[0], name=row[1], description=row[2], tokens_used=row[3]
                 )
         return None
 
@@ -141,11 +151,20 @@ class CacheManager:
         url_hash = self._hash_url(metadata.url)
 
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("""
+            await db.execute(
+                """
                 INSERT OR REPLACE INTO llm_metadata
                 (url_hash, url, name, description, tokens_used)
                 VALUES (?, ?, ?, ?, ?)
-            """, (url_hash, metadata.url, metadata.name, metadata.description, metadata.tokens_used))
+            """,
+                (
+                    url_hash,
+                    metadata.url,
+                    metadata.name,
+                    metadata.description,
+                    metadata.tokens_used,
+                ),
+            )
             await db.commit()
 
     async def clear_cache(self) -> None:
@@ -175,11 +194,13 @@ class CacheManager:
                 llm_count = (await cursor.fetchone())[0]
 
             # Total tokens used
-            async with db.execute("SELECT SUM(tokens_used) FROM llm_metadata") as cursor:
+            async with db.execute(
+                "SELECT SUM(tokens_used) FROM llm_metadata"
+            ) as cursor:
                 total_tokens = (await cursor.fetchone())[0] or 0
 
         return {
             "scrape_results_count": scrape_count,
             "llm_metadata_count": llm_count,
-            "total_tokens_used": total_tokens
+            "total_tokens_used": total_tokens,
         }

@@ -20,17 +20,20 @@ logger = logging.getLogger(__name__)
 
 class LLMError(Exception):
     """Base exception for LLM-related errors."""
+
     pass
 
 
 class LLMService:
     """Service for interacting with OpenAI LLM for bookmark metadata generation."""
 
-    def __init__(self,
-                 api_key: str | None = None,
-                 model: str = "gpt-4o",
-                 timeout: float = 30.0,
-                 max_retries: int = 3):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "gpt-4o",
+        timeout: float = 30.0,
+        max_retries: int = 3,
+    ):
         """
         Initialize LLM service.
 
@@ -54,9 +57,7 @@ class LLMService:
         # Initialize Jinja environment for templates
         template_dir = Path(__file__).parent / "prompts"
         self.jinja_env = Environment(
-            loader=FileSystemLoader(template_dir),
-            trim_blocks=True,
-            lstrip_blocks=True
+            loader=FileSystemLoader(template_dir), trim_blocks=True, lstrip_blocks=True
         )
 
         # Load the title/description template
@@ -68,7 +69,9 @@ class LLMService:
             self._title_desc_template = self.jinja_env.get_template("title_desc.jinja")
         return self._title_desc_template
 
-    async def title_desc(self, url: str, text: str, original_title: str = "") -> LLMMetadata:
+    async def title_desc(
+        self, url: str, text: str, original_title: str = ""
+    ) -> LLMMetadata:
         """
         Generate semantic title and description for a URL's content.
 
@@ -93,26 +96,17 @@ class LLMService:
 
         # Render the prompt template
         template = self._get_title_desc_template()
-        prompt = template.render(
-            url=url,
-            original_title=original_title,
-            content=text
-        )
+        prompt = template.render(url=url, original_title=original_title, content=text)
 
         # Make the OpenAI request with retries
         for attempt in range(self.max_retries):
             try:
                 response = await self.client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
+                    messages=[{"role": "user", "content": prompt}],
                     max_tokens=300,  # Enough for title + description
                     temperature=0.3,  # Low temperature for consistent results
-                    response_format={"type": "json_object"}  # Ensure JSON response
+                    response_format={"type": "json_object"},  # Ensure JSON response
                 )
 
                 # Extract the response content
@@ -130,14 +124,18 @@ class LLMService:
 
                 # Validate required fields
                 if "name" not in result_data or "description" not in result_data:
-                    raise LLMError("Response missing required fields 'name' or 'description'")
+                    raise LLMError(
+                        "Response missing required fields 'name' or 'description'"
+                    )
 
                 # Create and return LLMMetadata
                 metadata = LLMMetadata(
                     url=url,
                     name=str(result_data["name"])[:80],  # Enforce max length
-                    description=str(result_data["description"])[:200],  # Enforce max length
-                    tokens_used=tokens_used
+                    description=str(result_data["description"])[
+                        :200
+                    ],  # Enforce max length
+                    tokens_used=tokens_used,
                 )
 
                 logger.debug(f"Generated metadata for {url}: {metadata.name}")
@@ -147,17 +145,21 @@ class LLMService:
                 logger.warning(f"Rate limit hit for {url}, attempt {attempt + 1}: {e}")
                 if attempt < self.max_retries - 1:
                     # Exponential backoff with jitter
-                    delay = (2 ** attempt) + (attempt * 0.1)
+                    delay = (2**attempt) + (attempt * 0.1)
                     await asyncio.sleep(delay)
                     continue
-                raise LLMError(f"Rate limit exceeded after {self.max_retries} attempts") from e
+                raise LLMError(
+                    f"Rate limit exceeded after {self.max_retries} attempts"
+                ) from e
 
             except openai.APITimeoutError as e:
                 logger.warning(f"Timeout for {url}, attempt {attempt + 1}: {e}")
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(1.0)
                     continue
-                raise LLMError(f"Request timeout after {self.max_retries} attempts") from e
+                raise LLMError(
+                    f"Request timeout after {self.max_retries} attempts"
+                ) from e
 
             except openai.APIError as e:
                 logger.error(f"OpenAI API error for {url}: {e}")
@@ -173,7 +175,9 @@ class LLMService:
         # Should not reach here due to the raise in the loop
         raise LLMError(f"Failed to generate metadata after {self.max_retries} attempts")
 
-    async def title_desc_from_scrape_result(self, scrape_result: ScrapeResult) -> LLMMetadata:
+    async def title_desc_from_scrape_result(
+        self, scrape_result: ScrapeResult
+    ) -> LLMMetadata:
         """
         Convenience method to generate metadata from a ScrapeResult.
 
@@ -186,16 +190,18 @@ class LLMService:
         return await self.title_desc(
             url=scrape_result.url,
             text=scrape_result.text,
-            original_title=scrape_result.html_title
+            original_title=scrape_result.html_title,
         )
 
 
 # Convenience function for single metadata generation
-async def generate_title_desc(url: str,
-                             text: str,
-                             original_title: str = "",
-                             api_key: str | None = None,
-                             model: str = "gpt-4o") -> LLMMetadata:
+async def generate_title_desc(
+    url: str,
+    text: str,
+    original_title: str = "",
+    api_key: str | None = None,
+    model: str = "gpt-4o",
+) -> LLMMetadata:
     """
     Convenience function to generate title and description for a single URL.
 

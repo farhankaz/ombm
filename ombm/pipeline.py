@@ -18,18 +18,21 @@ logger = logging.getLogger(__name__)
 
 class PipelineError(Exception):
     """Base exception for pipeline-related errors."""
+
     pass
 
 
 class ProcessingResult:
     """Result of processing a URL through the pipeline."""
 
-    def __init__(self,
-                 bookmark: BookmarkRecord,
-                 scrape_result: ScrapeResult | None = None,
-                 llm_metadata: LLMMetadata | None = None,
-                 error: str | None = None,
-                 used_cache: bool = False):
+    def __init__(
+        self,
+        bookmark: BookmarkRecord,
+        scrape_result: ScrapeResult | None = None,
+        llm_metadata: LLMMetadata | None = None,
+        error: str | None = None,
+        used_cache: bool = False,
+    ):
         self.bookmark = bookmark
         self.scrape_result = scrape_result
         self.llm_metadata = llm_metadata
@@ -44,11 +47,13 @@ class BookmarkProcessor:
     with caching and error handling.
     """
 
-    def __init__(self,
-                 cache_manager: CacheManager | None = None,
-                 scraper: WebScraper | None = None,
-                 llm_service: LLMService | None = None,
-                 use_cache: bool = True):
+    def __init__(
+        self,
+        cache_manager: CacheManager | None = None,
+        scraper: WebScraper | None = None,
+        llm_service: LLMService | None = None,
+        use_cache: bool = True,
+    ):
         """
         Initialize the bookmark processor.
 
@@ -86,8 +91,9 @@ class BookmarkProcessor:
         if self._scraper_context is not None:
             await self._scraper.__aexit__(exc_type, exc_val, exc_tb)
 
-    async def process_bookmark(self, bookmark: BookmarkRecord,
-                              force_refresh: bool = False) -> ProcessingResult:
+    async def process_bookmark(
+        self, bookmark: BookmarkRecord, force_refresh: bool = False
+    ) -> ProcessingResult:
         """
         Process a single bookmark through the complete pipeline.
 
@@ -115,7 +121,9 @@ class BookmarkProcessor:
                 # Scrape the URL
                 try:
                     scrape_result = await self._scraper.fetch(bookmark.url)
-                    logger.debug(f"Scraped content from {bookmark.url}: {len(scrape_result.text)} chars")
+                    logger.debug(
+                        f"Scraped content from {bookmark.url}: {len(scrape_result.text)} chars"
+                    )
 
                     # Cache the scrape result
                     if self.use_cache:
@@ -124,8 +132,7 @@ class BookmarkProcessor:
                 except ScraperError as e:
                     logger.error(f"Failed to scrape {bookmark.url}: {e}")
                     return ProcessingResult(
-                        bookmark=bookmark,
-                        error=f"Scraping failed: {e}"
+                        bookmark=bookmark, error=f"Scraping failed: {e}"
                     )
 
             # Step 2: Get or generate LLM metadata
@@ -140,39 +147,46 @@ class BookmarkProcessor:
             if llm_metadata is None:
                 # Generate LLM metadata
                 try:
-                    llm_metadata = await self._llm_service.title_desc_from_scrape_result(scrape_result)
-                    logger.debug(f"Generated LLM metadata for {bookmark.url}: {llm_metadata.name}")
+                    llm_metadata = (
+                        await self._llm_service.title_desc_from_scrape_result(
+                            scrape_result
+                        )
+                    )
+                    logger.debug(
+                        f"Generated LLM metadata for {bookmark.url}: {llm_metadata.name}"
+                    )
 
                     # Cache the LLM metadata
                     if self.use_cache:
                         await self.cache_manager.store_llm_metadata(llm_metadata)
 
                 except LLMError as e:
-                    logger.error(f"Failed to generate LLM metadata for {bookmark.url}: {e}")
+                    logger.error(
+                        f"Failed to generate LLM metadata for {bookmark.url}: {e}"
+                    )
                     return ProcessingResult(
                         bookmark=bookmark,
                         scrape_result=scrape_result,
-                        error=f"LLM processing failed: {e}"
+                        error=f"LLM processing failed: {e}",
                     )
 
             return ProcessingResult(
                 bookmark=bookmark,
                 scrape_result=scrape_result,
                 llm_metadata=llm_metadata,
-                used_cache=used_cache
+                used_cache=used_cache,
             )
 
         except Exception as e:
             logger.error(f"Unexpected error processing {bookmark.url}: {e}")
-            return ProcessingResult(
-                bookmark=bookmark,
-                error=f"Unexpected error: {e}"
-            )
+            return ProcessingResult(bookmark=bookmark, error=f"Unexpected error: {e}")
 
-    async def process_bookmarks(self,
-                               bookmarks: list[BookmarkRecord],
-                               concurrency: int = 4,
-                               force_refresh: bool = False) -> list[ProcessingResult]:
+    async def process_bookmarks(
+        self,
+        bookmarks: list[BookmarkRecord],
+        concurrency: int = 4,
+        force_refresh: bool = False,
+    ) -> list[ProcessingResult]:
         """
         Process multiple bookmarks concurrently.
 
@@ -184,14 +198,18 @@ class BookmarkProcessor:
         Returns:
             List of ProcessingResult objects
         """
-        logger.info(f"Processing {len(bookmarks)} bookmarks with concurrency {concurrency}")
+        logger.info(
+            f"Processing {len(bookmarks)} bookmarks with concurrency {concurrency}"
+        )
 
         # Create semaphore to limit concurrency
         semaphore = asyncio.Semaphore(concurrency)
 
         async def process_with_semaphore(bookmark: BookmarkRecord) -> ProcessingResult:
             async with semaphore:
-                return await self.process_bookmark(bookmark, force_refresh=force_refresh)
+                return await self.process_bookmark(
+                    bookmark, force_refresh=force_refresh
+                )
 
         # Process all bookmarks concurrently
         tasks = [process_with_semaphore(bookmark) for bookmark in bookmarks]
@@ -202,10 +220,11 @@ class BookmarkProcessor:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Task failed for bookmark {bookmarks[i].url}: {result}")
-                processed_results.append(ProcessingResult(
-                    bookmark=bookmarks[i],
-                    error=f"Task failed: {result}"
-                ))
+                processed_results.append(
+                    ProcessingResult(
+                        bookmark=bookmarks[i], error=f"Task failed: {result}"
+                    )
+                )
             else:
                 processed_results.append(result)
 
@@ -213,7 +232,9 @@ class BookmarkProcessor:
         successful = sum(1 for r in processed_results if r.success)
         cached = sum(1 for r in processed_results if r.used_cache)
 
-        logger.info(f"Processing complete: {successful}/{len(bookmarks)} successful, {cached} from cache")
+        logger.info(
+            f"Processing complete: {successful}/{len(bookmarks)} successful, {cached} from cache"
+        )
 
         return processed_results
 
@@ -233,10 +254,12 @@ class BookmarkProcessor:
 
 
 # Convenience function for processing a single URL
-async def process_url(url: str,
-                     original_title: str = "",
-                     use_cache: bool = True,
-                     api_key: str | None = None) -> ProcessingResult:
+async def process_url(
+    url: str,
+    original_title: str = "",
+    use_cache: bool = True,
+    api_key: str | None = None,
+) -> ProcessingResult:
     """
     Convenience function to process a single URL through the pipeline.
 
@@ -253,13 +276,12 @@ async def process_url(url: str,
 
     # Create a mock bookmark record
     bookmark = BookmarkRecord(
-        uuid="temp",
-        title=original_title,
-        url=url,
-        created_at=datetime.now()
+        uuid="temp", title=original_title, url=url, created_at=datetime.now()
     )
 
     llm_service = LLMService(api_key=api_key) if api_key else None
 
-    async with BookmarkProcessor(use_cache=use_cache, llm_service=llm_service) as processor:
+    async with BookmarkProcessor(
+        use_cache=use_cache, llm_service=llm_service
+    ) as processor:
         return await processor.process_bookmark(bookmark)

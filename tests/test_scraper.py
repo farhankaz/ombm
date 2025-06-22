@@ -42,7 +42,7 @@ def expected_scrape_result():
     return ScrapeResult(
         url="https://example.com",
         text="Main Heading This is some test content that should be extracted. This is additional content for testing readability extraction.",
-        html_title="Test Page Title"
+        html_title="Test Page Title",
     )
 
 
@@ -57,7 +57,7 @@ class TestHTTPXScraper:
     @pytest.mark.asyncio
     async def test_successful_fetch(self, httpx_scraper, sample_html):
         """Test successful content fetching with HTTPX."""
-        with patch('httpx.AsyncClient') as mock_client:
+        with patch("httpx.AsyncClient") as mock_client:
             # Setup mock response
             mock_response = MagicMock()
             mock_response.text = sample_html
@@ -80,13 +80,15 @@ class TestHTTPXScraper:
     @pytest.mark.asyncio
     async def test_http_error_handling(self, httpx_scraper):
         """Test HTTP error handling."""
-        with patch('httpx.AsyncClient') as mock_client:
+        with patch("httpx.AsyncClient") as mock_client:
             # Setup mock to raise HTTP error
-            mock_get = AsyncMock(side_effect=httpx.HTTPStatusError(
-                "404 Not Found",
-                request=MagicMock(),
-                response=MagicMock(status_code=404)
-            ))
+            mock_get = AsyncMock(
+                side_effect=httpx.HTTPStatusError(
+                    "404 Not Found",
+                    request=MagicMock(),
+                    response=MagicMock(status_code=404),
+                )
+            )
             mock_client.return_value.__aenter__.return_value.get = mock_get
 
             # Test error handling
@@ -96,7 +98,7 @@ class TestHTTPXScraper:
     @pytest.mark.asyncio
     async def test_request_error_handling(self, httpx_scraper):
         """Test request error handling."""
-        with patch('httpx.AsyncClient') as mock_client:
+        with patch("httpx.AsyncClient") as mock_client:
             # Setup mock to raise request error
             mock_get = AsyncMock(side_effect=httpx.RequestError("Connection failed"))
             mock_client.return_value.__aenter__.return_value.get = mock_get
@@ -117,7 +119,7 @@ class TestHTTPXScraper:
         </html>
         """
 
-        with patch('httpx.AsyncClient') as mock_client:
+        with patch("httpx.AsyncClient") as mock_client:
             mock_response = MagicMock()
             mock_response.text = long_html
             mock_response.raise_for_status = MagicMock()
@@ -143,14 +145,18 @@ class TestPlaywrightScraper:
     @pytest.mark.asyncio
     async def test_context_manager(self, playwright_scraper):
         """Test Playwright scraper context manager."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright:
+        with patch("ombm.scraper.async_playwright") as mock_playwright:
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
 
             # Test context manager
@@ -165,7 +171,7 @@ class TestPlaywrightScraper:
     @pytest.mark.asyncio
     async def test_successful_fetch(self, playwright_scraper, sample_html):
         """Test successful content fetching with Playwright."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright:
+        with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup mocks
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -174,8 +180,12 @@ class TestPlaywrightScraper:
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
             mock_context.new_page = AsyncMock(return_value=mock_page)
             mock_page.goto = AsyncMock(return_value=mock_response)
@@ -200,7 +210,7 @@ class TestPlaywrightScraper:
     @pytest.mark.asyncio
     async def test_http_error_handling(self, playwright_scraper):
         """Test HTTP error handling in Playwright."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright:
+        with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup mocks
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -209,8 +219,12 @@ class TestPlaywrightScraper:
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
             mock_context.new_page = AsyncMock(return_value=mock_page)
             mock_page.goto = AsyncMock(return_value=mock_response)
@@ -227,7 +241,7 @@ class TestPlaywrightScraper:
     @pytest.mark.asyncio
     async def test_playwright_timeout_error(self, playwright_scraper):
         """Test Playwright timeout error handling."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright:
+        with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup mocks
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -235,8 +249,12 @@ class TestPlaywrightScraper:
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
             mock_context.new_page = AsyncMock(return_value=mock_page)
             mock_page.goto = AsyncMock(side_effect=PlaywrightError("Timeout"))
@@ -262,7 +280,7 @@ class TestWebScraper:
     @pytest.mark.asyncio
     async def test_playwright_success(self, sample_html):
         """Test successful scraping with Playwright."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright:
+        with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup Playwright mocks
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -271,8 +289,12 @@ class TestWebScraper:
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
             mock_context.new_page = AsyncMock(return_value=mock_page)
             mock_page.goto = AsyncMock(return_value=mock_response)
@@ -290,8 +312,10 @@ class TestWebScraper:
     @pytest.mark.asyncio
     async def test_fallback_to_httpx(self, sample_html):
         """Test fallback from Playwright to HTTPX."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright, \
-             patch('httpx.AsyncClient') as mock_httpx_client:
+        with (
+            patch("ombm.scraper.async_playwright") as mock_playwright,
+            patch("httpx.AsyncClient") as mock_httpx_client,
+        ):
 
             # Setup Playwright to start successfully but fail during fetch
             mock_browser = AsyncMock()
@@ -300,8 +324,12 @@ class TestWebScraper:
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
             mock_context.new_page = AsyncMock(return_value=mock_page)
 
@@ -326,7 +354,7 @@ class TestWebScraper:
     @pytest.mark.asyncio
     async def test_httpx_only_mode(self, sample_html):
         """Test HTTPX-only mode (no Playwright)."""
-        with patch('httpx.AsyncClient') as mock_client:
+        with patch("httpx.AsyncClient") as mock_client:
             mock_response = MagicMock()
             mock_response.text = sample_html
             mock_response.raise_for_status = MagicMock()
@@ -344,8 +372,10 @@ class TestWebScraper:
     @pytest.mark.asyncio
     async def test_all_methods_fail(self):
         """Test when both Playwright and HTTPX fail."""
-        with patch('ombm.scraper.async_playwright') as mock_playwright, \
-             patch('httpx.AsyncClient') as mock_httpx_client:
+        with (
+            patch("ombm.scraper.async_playwright") as mock_playwright,
+            patch("httpx.AsyncClient") as mock_httpx_client,
+        ):
 
             # Setup Playwright to start successfully but fail during fetch
             mock_browser = AsyncMock()
@@ -354,8 +384,12 @@ class TestWebScraper:
             mock_playwright_instance = AsyncMock()
 
             # Setup the async playwright call chain
-            mock_playwright.return_value.start = AsyncMock(return_value=mock_playwright_instance)
-            mock_playwright_instance.webkit.launch = AsyncMock(return_value=mock_browser)
+            mock_playwright.return_value.start = AsyncMock(
+                return_value=mock_playwright_instance
+            )
+            mock_playwright_instance.webkit.launch = AsyncMock(
+                return_value=mock_browser
+            )
             mock_browser.new_context = AsyncMock(return_value=mock_context)
             mock_context.new_page = AsyncMock(return_value=mock_page)
 
@@ -363,7 +397,9 @@ class TestWebScraper:
             mock_page.goto = AsyncMock(side_effect=Exception("Playwright fetch failed"))
 
             # Setup HTTPX to also fail
-            mock_httpx_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=httpx.RequestError("HTTPX failed"))
+            mock_httpx_client.return_value.__aenter__.return_value.get = AsyncMock(
+                side_effect=httpx.RequestError("HTTPX failed")
+            )
 
             async with WebScraper(use_playwright=True) as scraper:
                 with pytest.raises(ScraperError, match="Request failed"):
@@ -376,7 +412,7 @@ class TestScrapingIntegration:
     @pytest.mark.asyncio
     async def test_scrape_url_convenience_function(self, sample_html):
         """Test the convenience scrape_url function."""
-        with patch('httpx.AsyncClient') as mock_client:
+        with patch("httpx.AsyncClient") as mock_client:
             mock_response = MagicMock()
             mock_response.text = sample_html
             mock_response.raise_for_status = MagicMock()
@@ -433,6 +469,7 @@ class TestReadabilityExtraction:
         """
 
         from ombm.scraper import HTTPXScraper
+
         scraper = HTTPXScraper()
 
         # Test the internal method
@@ -444,5 +481,8 @@ class TestReadabilityExtraction:
         assert "another important paragraph" in text
 
         # Should filter out navigation/sidebar/footer
-        assert "Navigation content" not in text or len(text.split("Navigation content")) == 1
+        assert (
+            "Navigation content" not in text
+            or len(text.split("Navigation content")) == 1
+        )
         assert "script content" not in text

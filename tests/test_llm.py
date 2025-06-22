@@ -15,10 +15,12 @@ def mock_openai_response():
     """Mock OpenAI API response."""
     response = MagicMock()
     response.choices = [MagicMock()]
-    response.choices[0].message.content = json.dumps({
-        "name": "Test Article - Python Tutorial",
-        "description": "A comprehensive tutorial covering Python basics, data structures, and best practices for beginners"
-    })
+    response.choices[0].message.content = json.dumps(
+        {
+            "name": "Test Article - Python Tutorial",
+            "description": "A comprehensive tutorial covering Python basics, data structures, and best practices for beginners",
+        }
+    )
     response.usage.total_tokens = 150
     return response
 
@@ -42,22 +44,29 @@ class TestLLMService:
         return LLMService(api_key="test-key", model="gpt-4o", timeout=10.0)
 
     @pytest.mark.asyncio
-    async def test_successful_title_desc_generation(self, llm_service, mock_openai_response, sample_content):
+    async def test_successful_title_desc_generation(
+        self, llm_service, mock_openai_response, sample_content
+    ):
         """Test successful title and description generation."""
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = mock_openai_response
 
             result = await llm_service.title_desc(
                 url="https://example.com/python-tutorial",
                 text=sample_content,
-                original_title="Learn Python"
+                original_title="Learn Python",
             )
 
             # Verify result
             assert isinstance(result, LLMMetadata)
             assert result.url == "https://example.com/python-tutorial"
             assert result.name == "Test Article - Python Tutorial"
-            assert result.description == "A comprehensive tutorial covering Python basics, data structures, and best practices for beginners"
+            assert (
+                result.description
+                == "A comprehensive tutorial covering Python basics, data structures, and best practices for beginners"
+            )
             assert result.tokens_used == 150
 
             # Verify API call
@@ -74,13 +83,13 @@ class TestLLMService:
         # Create content longer than 8000 chars
         long_content = "A" * 10000
 
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = mock_openai_response
 
             await llm_service.title_desc(
-                url="https://example.com",
-                text=long_content,
-                original_title="Test"
+                url="https://example.com", text=long_content, original_title="Test"
             )
 
             # Check that the prompt contains truncated content
@@ -95,18 +104,21 @@ class TestLLMService:
         # Create response with very long fields
         long_response = MagicMock()
         long_response.choices = [MagicMock()]
-        long_response.choices[0].message.content = json.dumps({
-            "name": "A" * 150,  # Longer than 80 char limit
-            "description": "B" * 300  # Longer than 200 char limit
-        })
+        long_response.choices[0].message.content = json.dumps(
+            {
+                "name": "A" * 150,  # Longer than 80 char limit
+                "description": "B" * 300,  # Longer than 200 char limit
+            }
+        )
         long_response.usage.total_tokens = 100
 
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = long_response
 
             result = await llm_service.title_desc(
-                url="https://example.com",
-                text=sample_content
+                url="https://example.com", text=sample_content
             )
 
             # Verify truncation
@@ -123,13 +135,14 @@ class TestLLMService:
         bad_response.choices[0].message.content = "Not valid JSON"
         bad_response.usage.total_tokens = 50
 
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = bad_response
 
             with pytest.raises(LLMError, match="Invalid JSON response"):
                 await llm_service.title_desc(
-                    url="https://example.com",
-                    text=sample_content
+                    url="https://example.com", text=sample_content
                 )
 
     @pytest.mark.asyncio
@@ -137,19 +150,22 @@ class TestLLMService:
         """Test handling of response missing required fields."""
         incomplete_response = MagicMock()
         incomplete_response.choices = [MagicMock()]
-        incomplete_response.choices[0].message.content = json.dumps({
-            "name": "Test Title"
-            # Missing "description" field
-        })
+        incomplete_response.choices[0].message.content = json.dumps(
+            {
+                "name": "Test Title"
+                # Missing "description" field
+            }
+        )
         incomplete_response.usage.total_tokens = 50
 
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = incomplete_response
 
             with pytest.raises(LLMError, match="Response missing required fields"):
                 await llm_service.title_desc(
-                    url="https://example.com",
-                    text=sample_content
+                    url="https://example.com", text=sample_content
                 )
 
     @pytest.mark.asyncio
@@ -159,33 +175,39 @@ class TestLLMService:
         empty_response.choices = [MagicMock()]
         empty_response.choices[0].message.content = None
 
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = empty_response
 
             with pytest.raises(LLMError, match="Empty response from OpenAI"):
                 await llm_service.title_desc(
-                    url="https://example.com",
-                    text=sample_content
+                    url="https://example.com", text=sample_content
                 )
 
     @pytest.mark.asyncio
-    async def test_rate_limit_retry(self, llm_service, mock_openai_response, sample_content):
+    async def test_rate_limit_retry(
+        self, llm_service, mock_openai_response, sample_content
+    ):
         """Test retry logic for rate limiting."""
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             # Create a mock response for the error
             mock_response = MagicMock()
             mock_response.request = MagicMock()
 
             # First call raises rate limit, second succeeds
             mock_create.side_effect = [
-                openai.RateLimitError("Rate limit exceeded", response=mock_response, body=None),
-                mock_openai_response
+                openai.RateLimitError(
+                    "Rate limit exceeded", response=mock_response, body=None
+                ),
+                mock_openai_response,
             ]
 
             # Should succeed after retry
             result = await llm_service.title_desc(
-                url="https://example.com",
-                text=sample_content
+                url="https://example.com", text=sample_content
             )
 
             assert isinstance(result, LLMMetadata)
@@ -194,35 +216,41 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_rate_limit_max_retries_exceeded(self, llm_service, sample_content):
         """Test that rate limit retries eventually fail."""
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             # Create a mock response for the error
             mock_response = MagicMock()
             mock_response.request = MagicMock()
 
             # Always raise rate limit error
-            mock_create.side_effect = openai.RateLimitError("Rate limit exceeded", response=mock_response, body=None)
+            mock_create.side_effect = openai.RateLimitError(
+                "Rate limit exceeded", response=mock_response, body=None
+            )
 
             with pytest.raises(LLMError, match="Rate limit exceeded after 3 attempts"):
                 await llm_service.title_desc(
-                    url="https://example.com",
-                    text=sample_content
+                    url="https://example.com", text=sample_content
                 )
 
             assert mock_create.call_count == 3  # Should try 3 times
 
     @pytest.mark.asyncio
-    async def test_timeout_retry(self, llm_service, mock_openai_response, sample_content):
+    async def test_timeout_retry(
+        self, llm_service, mock_openai_response, sample_content
+    ):
         """Test retry logic for timeouts."""
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             # First call times out, second succeeds
             mock_create.side_effect = [
                 openai.APITimeoutError("Request timed out"),
-                mock_openai_response
+                mock_openai_response,
             ]
 
             result = await llm_service.title_desc(
-                url="https://example.com",
-                text=sample_content
+                url="https://example.com", text=sample_content
             )
 
             assert isinstance(result, LLMMetadata)
@@ -231,29 +259,36 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_api_error_no_retry(self, llm_service, sample_content):
         """Test that API errors don't trigger retries."""
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             # Create a mock request for the error
             mock_request = MagicMock()
-            mock_create.side_effect = openai.APIError("Invalid request", request=mock_request, body=None)
+            mock_create.side_effect = openai.APIError(
+                "Invalid request", request=mock_request, body=None
+            )
 
             with pytest.raises(LLMError, match="OpenAI API error"):
                 await llm_service.title_desc(
-                    url="https://example.com",
-                    text=sample_content
+                    url="https://example.com", text=sample_content
                 )
 
             assert mock_create.call_count == 1  # Should not retry
 
     @pytest.mark.asyncio
-    async def test_title_desc_from_scrape_result(self, llm_service, mock_openai_response):
+    async def test_title_desc_from_scrape_result(
+        self, llm_service, mock_openai_response
+    ):
         """Test convenience method for generating metadata from ScrapeResult."""
         scrape_result = ScrapeResult(
             url="https://example.com/article",
             text="This is article content about Python programming.",
-            html_title="Python Article"
+            html_title="Python Article",
         )
 
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = mock_openai_response
 
             result = await llm_service.title_desc_from_scrape_result(scrape_result)
@@ -271,19 +306,20 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_template_rendering(self, llm_service, sample_content):
         """Test that Jinja template is properly rendered."""
-        with patch.object(llm_service.client.chat.completions, 'create', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            llm_service.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
             mock_create.return_value = MagicMock()
             mock_create.return_value.choices = [MagicMock()]
-            mock_create.return_value.choices[0].message.content = json.dumps({
-                "name": "Test",
-                "description": "Test description"
-            })
+            mock_create.return_value.choices[0].message.content = json.dumps(
+                {"name": "Test", "description": "Test description"}
+            )
             mock_create.return_value.usage.total_tokens = 100
 
             await llm_service.title_desc(
                 url="https://test.com",
                 text=sample_content,
-                original_title="Original Title"
+                original_title="Original Title",
             )
 
             # Check that template variables were substituted
@@ -298,16 +334,20 @@ class TestConvenienceFunction:
     """Test convenience functions."""
 
     @pytest.mark.asyncio
-    async def test_generate_title_desc_function(self, mock_openai_response, sample_content):
+    async def test_generate_title_desc_function(
+        self, mock_openai_response, sample_content
+    ):
         """Test the convenience generate_title_desc function."""
-        with patch('ombm.llm.LLMService') as mock_service_class:
+        with patch("ombm.llm.LLMService") as mock_service_class:
             mock_service = MagicMock()
-            mock_service.title_desc = AsyncMock(return_value=LLMMetadata(
-                url="https://example.com",
-                name="Generated Title",
-                description="Generated description",
-                tokens_used=100
-            ))
+            mock_service.title_desc = AsyncMock(
+                return_value=LLMMetadata(
+                    url="https://example.com",
+                    name="Generated Title",
+                    description="Generated description",
+                    tokens_used=100,
+                )
+            )
             mock_service_class.return_value = mock_service
 
             result = await generate_title_desc(
@@ -315,17 +355,17 @@ class TestConvenienceFunction:
                 text=sample_content,
                 original_title="Original",
                 api_key="test-key",
-                model="gpt-4"
+                model="gpt-4",
             )
 
             # Verify service was created with correct parameters
-            mock_service_class.assert_called_once_with(api_key="test-key", model="gpt-4")
+            mock_service_class.assert_called_once_with(
+                api_key="test-key", model="gpt-4"
+            )
 
             # Verify title_desc was called
             mock_service.title_desc.assert_called_once_with(
-                "https://example.com",
-                sample_content,
-                "Original"
+                "https://example.com", sample_content, "Original"
             )
 
             # Verify result
@@ -346,7 +386,7 @@ class TestLLMServiceInitialization:
 
     def test_initialization_without_api_key(self):
         """Test initialization without API key (uses environment variable)."""
-        with patch('ombm.llm.openai.AsyncOpenAI') as mock_openai:
+        with patch("ombm.llm.openai.AsyncOpenAI") as mock_openai:
             service = LLMService(model="gpt-4", max_retries=5)
 
             assert service.model == "gpt-4"

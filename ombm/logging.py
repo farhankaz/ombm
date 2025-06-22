@@ -38,9 +38,7 @@ def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
         processors.append(structlog.processors.JSONRenderer())
     else:
         # Human-readable console output
-        processors.append(
-            structlog.dev.ConsoleRenderer(colors=sys.stderr.isatty())
-        )
+        processors.append(structlog.dev.ConsoleRenderer(colors=sys.stderr.isatty()))
 
     # Configure structlog
     structlog.configure(
@@ -71,9 +69,7 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
 
 
 def log_execution_context(
-    logger: structlog.stdlib.BoundLogger,
-    operation: str,
-    **kwargs: Any
+    logger: structlog.stdlib.BoundLogger, operation: str, **kwargs: Any
 ) -> structlog.stdlib.BoundLogger:
     """Add execution context to logger.
 
@@ -85,10 +81,7 @@ def log_execution_context(
     Returns:
         Logger with bound context
     """
-    context = {
-        "operation": operation,
-        **kwargs
-    }
+    context = {"operation": operation, **kwargs}
     return logger.bind(**context)
 
 
@@ -97,7 +90,7 @@ def log_bookmark_processing(
     url: str,
     title: str,
     stage: str,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Log bookmark processing with structured data.
 
@@ -108,13 +101,7 @@ def log_bookmark_processing(
         stage: Processing stage (scrape, llm, cache, etc.)
         **kwargs: Additional context
     """
-    logger.info(
-        "Processing bookmark",
-        url=url,
-        title=title,
-        stage=stage,
-        **kwargs
-    )
+    logger.info("Processing bookmark", url=url, title=title, stage=stage, **kwargs)
 
 
 def log_performance_metrics(
@@ -122,7 +109,7 @@ def log_performance_metrics(
     operation: str,
     duration: float,
     items_processed: int = 0,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Log performance metrics with structured data.
 
@@ -137,7 +124,7 @@ def log_performance_metrics(
         "operation": operation,
         "duration_seconds": round(duration, 3),
         "items_processed": items_processed,
-        **kwargs
+        **kwargs,
     }
 
     if items_processed > 0:
@@ -150,7 +137,7 @@ def log_error_with_context(
     logger: structlog.stdlib.BoundLogger,
     error: Exception,
     operation: str,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Log error with structured context.
 
@@ -166,5 +153,5 @@ def log_error_with_context(
         error_type=type(error).__name__,
         error_message=str(error),
         **kwargs,
-        exc_info=True
+        exc_info=True,
     )

@@ -81,15 +81,19 @@ class ConfigLoader:
                 with open(self.config_path, "rb") as f:
                     file_config = tomllib.load(f)
                 config_dict = self._merge_dicts(config_dict, file_config)
-                logger.debug("Loaded configuration from file", path=str(self.config_path))
+                logger.debug(
+                    "Loaded configuration from file", path=str(self.config_path)
+                )
             except Exception as e:
                 logger.warning(
                     "Failed to load config file, using defaults",
                     path=str(self.config_path),
-                    error=str(e)
+                    error=str(e),
                 )
         else:
-            logger.debug("Config file not found, using defaults", path=str(self.config_path))
+            logger.debug(
+                "Config file not found, using defaults", path=str(self.config_path)
+            )
 
         # Apply environment variable overrides
         config_dict = self._apply_env_overrides(config_dict)
@@ -114,12 +118,12 @@ class ConfigLoader:
         try:
             with open(self.config_path, "w", encoding="utf-8") as f:
                 f.write(toml_content)
-            logger.info("Created default configuration file", path=str(self.config_path))
+            logger.info(
+                "Created default configuration file", path=str(self.config_path)
+            )
         except Exception as e:
             logger.error(
-                "Failed to create config file",
-                path=str(self.config_path),
-                error=str(e)
+                "Failed to create config file", path=str(self.config_path), error=str(e)
             )
             raise
 
@@ -133,12 +137,18 @@ class ConfigLoader:
                 result[key] = value
         return result
 
-    def _merge_dicts(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    def _merge_dicts(
+        self, base: dict[str, Any], override: dict[str, Any]
+    ) -> dict[str, Any]:
         """Recursively merge two dictionaries."""
         result = self._deep_copy_dict(base)
 
         for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._merge_dicts(result[key], value)
             else:
                 result[key] = value
@@ -147,7 +157,9 @@ class ConfigLoader:
 
     def _apply_env_overrides(self, config: dict[str, Any]) -> dict[str, Any]:
         """Apply environment variable overrides to config."""
-        env_vars = {k: v for k, v in os.environ.items() if k.startswith(self.ENV_PREFIX)}
+        env_vars = {
+            k: v for k, v in os.environ.items() if k.startswith(self.ENV_PREFIX)
+        }
 
         if not env_vars:
             return config
@@ -158,7 +170,7 @@ class ConfigLoader:
 
         for env_key, env_value in env_vars.items():
             # Remove prefix and convert to lowercase
-            config_key = env_key[len(self.ENV_PREFIX):].lower()
+            config_key = env_key[len(self.ENV_PREFIX) :].lower()
 
             # Handle nested keys (e.g., OMBM_OPENAI_MODEL -> openai.model)
             # Split only on the first underscore to get section and key
@@ -222,9 +234,9 @@ class ConfigLoader:
                 if isinstance(value, str):
                     lines.append(f'{prefix}{key} = "{value}"')
                 elif isinstance(value, bool):
-                    lines.append(f'{prefix}{key} = {str(value).lower()}')
+                    lines.append(f"{prefix}{key} = {str(value).lower()}")
                 else:
-                    lines.append(f'{prefix}{key} = {value}')
+                    lines.append(f"{prefix}{key} = {value}")
 
         # Second pass: dict values (sections)
         for key, value in d.items():
