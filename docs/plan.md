@@ -123,8 +123,8 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 
 | ID   | Task                                  | Pri | Owner | Status | Notes |
 | ---- | ------------------------------------- | --- | ----- | ------ | ----- |
-| T‑01 | Bootstrap repo & CI pipeline          | P1  |       | ⚪️     |       |
-| T‑02 | Set up Typer CLI entrypoint           | P1  |       | ⚪️     |       |
+| T‑01 | Bootstrap repo & CI pipeline          | P1  | Cline | 🟢     | Completed: repo init, pyproject.toml, CI workflow, tests passing |
+| T‑02 | Set up Typer CLI entrypoint           | P1  | Cline | 🟢     | Completed: CLI working, script entry point fixed, all tests pass |
 | T‑03 | Implement structured logging baseline | P2  |       | ⚪️     |       |
 | T‑04 | Create Bookmark adapter stub          | P1  |       | ⚪️     |       |
 | T‑05 | Implement SQLite cache schema         | P1  |       | ⚪️     |       |
