@@ -128,7 +128,7 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 | T‑03 | Implement structured logging baseline | P2  | Cline | 🟢     | Completed: structlog config, JSON logs in debug, CLI integration |
 | T‑04 | Create Bookmark adapter stub          | P1  | Cline | 🟢     | Completed: BookmarkAdapter with mocked data, models.py, comprehensive tests |
 | T‑05 | Implement SQLite cache schema         | P1  | Cline | 🟢     | Completed: SQLite cache with aiosqlite, table creation, CRUD operations, comprehensive tests |
-| T‑06 | Global settings loader                | P2  |       | ⚪️     |       |
+| T‑06 | Global settings loader                | P2  | Cline | 🟢     | Completed: TOML config system, env overrides, comprehensive tests, 92% coverage |
 | T‑11 | Playwright fetch helper               | P1  |       | ⚪️     |       |
 | T‑12 | Fallback HTTPX fetch                  | P1  |       | ⚪️     |       |
 | T‑13 | Readability content cleaner           | P2  |       | ⚪️     |       |

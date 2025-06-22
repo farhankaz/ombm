@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Union
+from pathlib import Path
+from typing import Any, Dict, Union
 
 
 @dataclass
@@ -36,3 +37,86 @@ class FolderNode:
     """Represents a folder node in the bookmark hierarchy."""
     name: str
     children: list[Union['FolderNode', 'LLMMetadata']]
+
+
+@dataclass
+class OpenAIConfig:
+    """OpenAI API configuration."""
+    model: str
+    max_tokens: int
+    temperature: float
+    timeout: float
+
+
+@dataclass
+class ScrapingConfig:
+    """Web scraping configuration."""
+    timeout: float
+    max_content_length: int
+    user_agent: str
+    max_retries: int
+    retry_delay: float
+
+
+@dataclass
+class ConcurrencyConfig:
+    """Concurrency configuration."""
+    default_workers: int
+    max_workers: int
+
+
+@dataclass
+class CacheConfig:
+    """Cache configuration."""
+    enabled: bool
+    ttl_days: int
+
+
+@dataclass
+class LoggingConfig:
+    """Logging configuration."""
+    level: str
+    format: str
+
+
+@dataclass
+class PathsConfig:
+    """Path configuration."""
+    config_dir: str
+    cache_file: str
+    log_dir: str
+
+
+@dataclass
+class OMBMConfig:
+    """Main OMBM configuration."""
+    openai: OpenAIConfig
+    scraping: ScrapingConfig
+    concurrency: ConcurrencyConfig
+    cache: CacheConfig
+    logging: LoggingConfig
+    paths: PathsConfig
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'OMBMConfig':
+        """Create config from dictionary."""
+        return cls(
+            openai=OpenAIConfig(**data["openai"]),
+            scraping=ScrapingConfig(**data["scraping"]),
+            concurrency=ConcurrencyConfig(**data["concurrency"]),
+            cache=CacheConfig(**data["cache"]),
+            logging=LoggingConfig(**data["logging"]),
+            paths=PathsConfig(**data["paths"]),
+        )
+
+    def get_config_dir(self) -> Path:
+        """Get config directory as Path object."""
+        return Path(self.paths.config_dir).expanduser()
+
+    def get_cache_path(self) -> Path:
+        """Get cache file path."""
+        return self.get_config_dir() / self.paths.cache_file
+
+    def get_log_dir(self) -> Path:
+        """Get log directory path."""
+        return self.get_config_dir() / self.paths.log_dir
