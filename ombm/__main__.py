@@ -6,6 +6,7 @@ import typer
 from rich.console import Console
 
 from ombm import __version__
+from ombm.logging import configure_logging, get_logger
 
 app = typer.Typer(
     name="ombm",
@@ -97,15 +98,41 @@ def organize(
             help="Display timing and memory stats",
         ),
     ] = False,
+    json_logs: Annotated[
+        bool,
+        typer.Option(
+            "--json-logs",
+            help="Output logs as JSON lines",
+        ),
+    ] = False,
 ) -> None:
     """Organize Safari bookmarks into semantic folders."""
+    # Configure logging first
+    configure_logging(verbose=verbose, json_output=json_logs)
+    logger = get_logger(__name__)
+    
+    # Log startup
+    logger.info(
+        "Starting OMBM",
+        version=__version__,
+        max_bookmarks=max_bookmarks if max_bookmarks > 0 else None,
+        concurrency=concurrency,
+        model=model,
+        save_mode=save,
+        no_scrape=no_scrape,
+        json_output=json_out,
+        profile_enabled=profile,
+    )
+    
     console.print("🔖 OMBM - Organize My Bookmarks")
     console.print(f"Version: {__version__}")
 
     if save:
         console.print("⚠️  Save mode enabled - changes will be written to Safari")
+        logger.warning("Save mode enabled - changes will be written to Safari")
     else:
         console.print("🔍 Running in dry-run mode (no changes will be made)")
+        logger.info("Running in dry-run mode")
 
     console.print(f"Max bookmarks: {max_bookmarks if max_bookmarks > 0 else 'unlimited'}")
     console.print(f"Concurrency: {concurrency}")
@@ -113,19 +140,25 @@ def organize(
 
     if verbose:
         console.print("🔍 Verbose logging enabled")
+        logger.debug("Verbose logging enabled")
 
     if no_scrape:
         console.print("📚 Using cache-only mode")
+        logger.info("Cache-only mode enabled")
 
     if json_out:
         console.print(f"📄 JSON output will be written to: {json_out}")
+        logger.info("JSON output configured", output_file=json_out)
 
     if profile:
         console.print("📊 Performance profiling enabled")
+        logger.info("Performance profiling enabled")
 
     # TODO: Implement actual bookmark organization logic
     console.print("\n🚧 Core functionality not yet implemented")
     console.print("This is a placeholder for the bookmark organization pipeline.")
+    
+    logger.info("Core functionality placeholder - implementation pending")
 
 
 if __name__ == "__main__":
