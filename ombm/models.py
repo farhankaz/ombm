@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 
 @dataclass
@@ -98,7 +98,7 @@ class OMBMConfig:
     paths: PathsConfig
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'OMBMConfig':
+    def from_dict(cls, data: dict[str, Any]) -> 'OMBMConfig':
         """Create config from dictionary."""
         return cls(
             openai=OpenAIConfig(**data["openai"]),

@@ -1,14 +1,19 @@
 """Tests for the pipeline integration module."""
 
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from ombm.pipeline import BookmarkProcessor, ProcessingResult, PipelineError, process_url
-from ombm.models import BookmarkRecord, ScrapeResult, LLMMetadata
+import pytest
+
 from ombm.cache import CacheManager
-from ombm.scraper import WebScraper, ScraperError
-from ombm.llm import LLMService, LLMError
+from ombm.llm import LLMError, LLMService
+from ombm.models import BookmarkRecord, LLMMetadata, ScrapeResult
+from ombm.pipeline import (
+    BookmarkProcessor,
+    ProcessingResult,
+    process_url,
+)
+from ombm.scraper import ScraperError, WebScraper
 
 
 @pytest.fixture
@@ -54,7 +59,7 @@ class TestProcessingResult:
             llm_metadata=sample_llm_metadata,
             used_cache=False
         )
-        
+
         assert result.success is True
         assert result.error is None
         assert result.bookmark == sample_bookmark
@@ -68,7 +73,7 @@ class TestProcessingResult:
             bookmark=sample_bookmark,
             error="Test error"
         )
-        
+
         assert result.success is False
         assert result.error == "Test error"
         assert result.scrape_result is None
@@ -109,31 +114,31 @@ class TestBookmarkProcessor:
         return service
 
     @pytest.mark.asyncio
-    async def test_successful_processing_no_cache(self, sample_bookmark, sample_scrape_result, 
-                                                 sample_llm_metadata, mock_cache_manager, 
+    async def test_successful_processing_no_cache(self, sample_bookmark, sample_scrape_result,
+                                                 sample_llm_metadata, mock_cache_manager,
                                                  mock_scraper, mock_llm_service):
         """Test successful processing without cached data."""
         # Setup mocks
         mock_scraper.fetch = AsyncMock(return_value=sample_scrape_result)
         mock_llm_service.title_desc_from_scrape_result = AsyncMock(return_value=sample_llm_metadata)
-        
+
         # Create processor
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             result = await processor.process_bookmark(sample_bookmark)
-        
+
         # Verify result
         assert result.success is True
         assert result.bookmark == sample_bookmark
         assert result.scrape_result == sample_scrape_result
         assert result.llm_metadata == sample_llm_metadata
         assert result.used_cache is False
-        
+
         # Verify calls
         mock_cache_manager.get_scrape_result.assert_called_once_with(sample_bookmark.url)
         mock_cache_manager.get_llm_metadata.assert_called_once_with(sample_bookmark.url)
@@ -150,20 +155,20 @@ class TestBookmarkProcessor:
         # Setup cache to return data
         mock_cache_manager.get_scrape_result = AsyncMock(return_value=sample_scrape_result)
         mock_cache_manager.get_llm_metadata = AsyncMock(return_value=sample_llm_metadata)
-        
+
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             result = await processor.process_bookmark(sample_bookmark)
-        
+
         # Verify result
         assert result.success is True
         assert result.used_cache is True
-        
+
         # Verify no scraping or LLM calls were made
         mock_scraper.fetch.assert_not_called()
         mock_llm_service.title_desc_from_scrape_result.assert_not_called()
@@ -174,16 +179,16 @@ class TestBookmarkProcessor:
         """Test handling of scraping errors."""
         # Setup scraper to fail
         mock_scraper.fetch = AsyncMock(side_effect=ScraperError("Scraping failed"))
-        
+
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             result = await processor.process_bookmark(sample_bookmark)
-        
+
         # Verify error result
         assert result.success is False
         assert "Scraping failed" in result.error
@@ -199,16 +204,16 @@ class TestBookmarkProcessor:
         mock_llm_service.title_desc_from_scrape_result = AsyncMock(
             side_effect=LLMError("LLM processing failed")
         )
-        
+
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             result = await processor.process_bookmark(sample_bookmark)
-        
+
         # Verify error result
         assert result.success is False
         assert "LLM processing failed" in result.error
@@ -222,26 +227,26 @@ class TestBookmarkProcessor:
         # Setup cache to return data (which should be ignored)
         mock_cache_manager.get_scrape_result = AsyncMock(return_value=sample_scrape_result)
         mock_cache_manager.get_llm_metadata = AsyncMock(return_value=sample_llm_metadata)
-        
+
         # Setup fresh processing
         mock_scraper.fetch = AsyncMock(return_value=sample_scrape_result)
         mock_llm_service.title_desc_from_scrape_result = AsyncMock(return_value=sample_llm_metadata)
-        
+
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             result = await processor.process_bookmark(sample_bookmark, force_refresh=True)
-        
+
         # Verify fresh processing occurred
         assert result.success is True
         assert result.used_cache is False
         mock_scraper.fetch.assert_called_once()
         mock_llm_service.title_desc_from_scrape_result.assert_called_once()
-        
+
         # Verify cache wasn't checked
         mock_cache_manager.get_scrape_result.assert_not_called()
         mock_cache_manager.get_llm_metadata.assert_not_called()
@@ -252,21 +257,21 @@ class TestBookmarkProcessor:
         """Test processing with cache disabled."""
         mock_scraper.fetch = AsyncMock(return_value=sample_scrape_result)
         mock_llm_service.title_desc_from_scrape_result = AsyncMock(return_value=sample_llm_metadata)
-        
+
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service,
             use_cache=False
         )
-        
+
         async with processor:
             result = await processor.process_bookmark(sample_bookmark)
-        
+
         # Verify result
         assert result.success is True
         assert result.used_cache is False
-        
+
         # Verify no cache operations
         mock_cache_manager.initialize.assert_not_called()
         mock_cache_manager.get_scrape_result.assert_not_called()
@@ -279,31 +284,31 @@ class TestBookmarkProcessor:
         """Test processing multiple bookmarks concurrently."""
         # Create multiple bookmarks
         bookmarks = [
-            BookmarkRecord(uuid=f"test-{i}", title=f"Title {i}", 
+            BookmarkRecord(uuid=f"test-{i}", title=f"Title {i}",
                           url=f"https://example.com/{i}", created_at=datetime.now())
             for i in range(3)
         ]
-        
+
         # Setup mocks
         mock_scraper.fetch = AsyncMock(side_effect=[
             ScrapeResult(url=f"https://example.com/{i}", text=f"Content {i}", html_title=f"Title {i}")
             for i in range(3)
         ])
         mock_llm_service.title_desc_from_scrape_result = AsyncMock(side_effect=[
-            LLMMetadata(url=f"https://example.com/{i}", name=f"Name {i}", 
+            LLMMetadata(url=f"https://example.com/{i}", name=f"Name {i}",
                        description=f"Description {i}", tokens_used=100)
             for i in range(3)
         ])
-        
+
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             results = await processor.process_bookmarks(bookmarks, concurrency=2)
-        
+
         # Verify results
         assert len(results) == 3
         assert all(result.success for result in results)
@@ -318,10 +323,10 @@ class TestBookmarkProcessor:
             scraper=mock_scraper,
             llm_service=mock_llm_service
         )
-        
+
         async with processor:
             stats = await processor.get_processing_stats()
-        
+
         # Verify stats
         assert stats["cache_enabled"] is True
         assert stats["scrape_results_count"] == 10
@@ -336,10 +341,10 @@ class TestBookmarkProcessor:
             llm_service=mock_llm_service,
             use_cache=False
         )
-        
+
         async with processor:
             stats = await processor.get_processing_stats()
-        
+
         assert stats["cache_enabled"] is False
 
 
@@ -361,18 +366,18 @@ class TestConvenienceFunction:
             mock_processor.__aenter__ = AsyncMock(return_value=mock_processor)
             mock_processor.__aexit__ = AsyncMock()
             mock_processor_class.return_value = mock_processor
-            
+
             result = await process_url(
                 url="https://example.com/test",
                 original_title="Test Title",
                 use_cache=True,
                 api_key="test-key"
             )
-            
+
             # Verify processor was created and called
             mock_processor_class.assert_called_once()
             mock_processor.process_bookmark.assert_called_once()
-            
+
             # Verify result
             assert result == mock_result
 
@@ -386,7 +391,7 @@ class TestIntegration:
         with patch('ombm.pipeline.CacheManager') as mock_cache_class, \
              patch('ombm.pipeline.WebScraper') as mock_scraper_class, \
              patch('ombm.pipeline.LLMService') as mock_llm_class:
-            
+
             # Setup mocks
             mock_cache = AsyncMock()
             mock_cache.get_scrape_result = AsyncMock(return_value=None)
@@ -394,7 +399,7 @@ class TestIntegration:
             mock_cache.store_scrape_result = AsyncMock()
             mock_cache.store_llm_metadata = AsyncMock()
             mock_cache_class.return_value = mock_cache
-            
+
             mock_scraper = AsyncMock()
             mock_scraper.__aenter__ = AsyncMock(return_value=mock_scraper)
             mock_scraper.__aexit__ = AsyncMock()
@@ -404,7 +409,7 @@ class TestIntegration:
                 html_title="Test Title"
             ))
             mock_scraper_class.return_value = mock_scraper
-            
+
             mock_llm = AsyncMock()
             mock_llm.title_desc_from_scrape_result = AsyncMock(return_value=LLMMetadata(
                 url="https://example.com",
@@ -413,7 +418,7 @@ class TestIntegration:
                 tokens_used=100
             ))
             mock_llm_class.return_value = mock_llm
-            
+
             # Test processing
             bookmark = BookmarkRecord(
                 uuid="test",
@@ -421,14 +426,14 @@ class TestIntegration:
                 url="https://example.com",
                 created_at=datetime.now()
             )
-            
+
             async with BookmarkProcessor() as processor:
                 result = await processor.process_bookmark(bookmark)
-            
+
             # Verify success
             assert result.success is True
             assert result.llm_metadata.name == "Generated Title"
-            
+
             # Verify all components were called
             mock_cache.store_scrape_result.assert_called_once()
             mock_cache.store_llm_metadata.assert_called_once()
