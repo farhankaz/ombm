@@ -471,7 +471,6 @@ class TestIntegration:
             patch("ombm.pipeline.WebScraper") as mock_scraper_class,
             patch("ombm.pipeline.LLMService") as mock_llm_class,
         ):
-
             # Setup mocks
             mock_cache = AsyncMock()
             mock_cache.get_scrape_result = AsyncMock(return_value=None)

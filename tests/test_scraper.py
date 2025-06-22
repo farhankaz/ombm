@@ -114,7 +114,7 @@ class TestHTTPXScraper:
         <html>
         <head><title>Long Content</title></head>
         <body>
-        <p>{'A' * 12000}</p>
+        <p>{"A" * 12000}</p>
         </body>
         </html>
         """
@@ -316,7 +316,6 @@ class TestWebScraper:
             patch("ombm.scraper.async_playwright") as mock_playwright,
             patch("httpx.AsyncClient") as mock_httpx_client,
         ):
-
             # Setup Playwright to start successfully but fail during fetch
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -376,7 +375,6 @@ class TestWebScraper:
             patch("ombm.scraper.async_playwright") as mock_playwright,
             patch("httpx.AsyncClient") as mock_httpx_client,
         ):
-
             # Setup Playwright to start successfully but fail during fetch
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
