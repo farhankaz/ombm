@@ -187,17 +187,20 @@ class CacheManager:
         async with aiosqlite.connect(self.db_path) as db:
             # Count scrape results
             async with db.execute("SELECT COUNT(*) FROM scrape_results") as cursor:
-                scrape_count = (await cursor.fetchone())[0]
+                row = await cursor.fetchone()
+                scrape_count = row[0] if row else 0
 
             # Count LLM metadata
             async with db.execute("SELECT COUNT(*) FROM llm_metadata") as cursor:
-                llm_count = (await cursor.fetchone())[0]
+                row = await cursor.fetchone()
+                llm_count = row[0] if row else 0
 
             # Total tokens used
             async with db.execute(
                 "SELECT SUM(tokens_used) FROM llm_metadata"
             ) as cursor:
-                total_tokens = (await cursor.fetchone())[0] or 0
+                row = await cursor.fetchone()
+                total_tokens = row[0] if row and row[0] is not None else 0
 
         return {
             "scrape_results_count": scrape_count,

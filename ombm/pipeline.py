@@ -65,11 +65,11 @@ class BookmarkProcessor:
         """
         self.cache_manager = cache_manager or CacheManager()
         self.use_cache = use_cache
-        self._scraper = scraper
-        self._llm_service = llm_service
+        self._scraper: WebScraper | None = scraper
+        self._llm_service: LLMService | None = llm_service
         self._scraper_context = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "BookmarkProcessor":
         """Async context manager entry."""
         # Initialize cache
         if self.use_cache:
@@ -78,7 +78,7 @@ class BookmarkProcessor:
         # Initialize scraper if needed
         if self._scraper is None:
             self._scraper = WebScraper()
-            self._scraper_context = await self._scraper.__aenter__()
+            await self._scraper.__aenter__()
 
         # Initialize LLM service if needed
         if self._llm_service is None:
@@ -86,9 +86,9 @@ class BookmarkProcessor:
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: object) -> None:
         """Async context manager exit."""
-        if self._scraper_context is not None:
+        if self._scraper is not None:
             await self._scraper.__aexit__(exc_type, exc_val, exc_tb)
 
     async def process_bookmark(
@@ -120,6 +120,8 @@ class BookmarkProcessor:
             if scrape_result is None:
                 # Scrape the URL
                 try:
+                    if self._scraper is None:
+                        raise PipelineError("Scraper not initialized")
                     scrape_result = await self._scraper.fetch(bookmark.url)
                     logger.debug(
                         f"Scraped content from {bookmark.url}: {len(scrape_result.text)} chars"
@@ -147,6 +149,8 @@ class BookmarkProcessor:
             if llm_metadata is None:
                 # Generate LLM metadata
                 try:
+                    if self._llm_service is None:
+                        raise PipelineError("LLM service not initialized")
                     llm_metadata = (
                         await self._llm_service.title_desc_from_scrape_result(
                             scrape_result
@@ -216,7 +220,7 @@ class BookmarkProcessor:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Handle any exceptions from gather
-        processed_results = []
+        processed_results: list[ProcessingResult] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Task failed for bookmark {bookmarks[i].url}: {result}")
@@ -226,7 +230,9 @@ class BookmarkProcessor:
                     )
                 )
             else:
-                processed_results.append(result)
+                # We know result is ProcessingResult here due to isinstance check above
+                from typing import cast
+                processed_results.append(cast(ProcessingResult, result))
 
         # Log summary
         successful = sum(1 for r in processed_results if r.success)

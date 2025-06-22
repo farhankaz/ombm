@@ -9,7 +9,7 @@ from .models import BookmarkRecord
 class BookmarkAdapter:
     """Adapter for retrieving Safari bookmarks on macOS."""
 
-    async def get_bookmarks(self, max_count: int = None) -> list[BookmarkRecord]:
+    async def get_bookmarks(self, max_count: int | None = None) -> list[BookmarkRecord]:
         """
         Retrieve Safari bookmarks from macOS.
 

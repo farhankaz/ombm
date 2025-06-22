@@ -32,12 +32,12 @@ class PlaywrightScraper:
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "PlaywrightScraper":
         """Async context manager entry."""
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type, exc_val: Exception, exc_tb: object) -> None:
         """Async context manager exit."""
         await self.close()
 
@@ -174,7 +174,7 @@ class HTTPXScraper:
 
                 # Extract title and readable content
                 soup = BeautifulSoup(html_content, "html.parser")
-                html_title = soup.title.string.strip() if soup.title else ""
+                html_title = soup.title.string.strip() if soup.title and soup.title.string else ""
 
                 # Extract readable text
                 text_content = self._extract_readable_text(html_content)
@@ -246,7 +246,7 @@ class WebScraper:
         self._playwright_scraper: PlaywrightScraper | None = None
         self._httpx_scraper = HTTPXScraper(timeout=httpx_timeout)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "WebScraper":
         """Async context manager entry."""
         if self.use_playwright:
             self._playwright_scraper = PlaywrightScraper(
@@ -255,7 +255,7 @@ class WebScraper:
             await self._playwright_scraper.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: object) -> None:
         """Async context manager exit."""
         if self._playwright_scraper:
             await self._playwright_scraper.close()
