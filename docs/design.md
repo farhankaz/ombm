@@ -1,0 +1,213 @@
+# OMBM — Organize My Bookmarks
+
+## Detailed Design Document (v1.0)
+
+**Date:** 22 Jun 2025 | **Author:** Farhan Kazmi / ChatGPT
+
+---
+
+### 1. Overview
+
+This document translates the approved Product Requirements Document (PRD) into a concrete technical design for the first public release of **OMBM**, a macOS command‑line tool that semantically organizes Safari bookmarks. It targets Python 3.11+ with the libraries and architecture outlined in the Tech‑Stack Recommendation memo.
+
+### 2. High‑Level Architecture
+
+```
++-------------------+
+|      User         |
+|  (Terminal)       |
++---------+---------+
+          | CLI call (Typer)
+          v
++-------------------+      invokes       +----------------+  REST  +--------------+
+|  CLI Front‑End    |  ───────────────►  |  Controller    |  API   |   Safari      |
+| (Typer entrypoint)|                     |  (async main)  | <───► |  Bookmark DB |
++-------------------+      tasks         +-------+--------+        +--------------+
+                                            |  asyncio tasks
+                                            v
+                               +-----------+-----------+
+                               |   Work Queue (AnyIO) |
+                               +-----------+-----------+
+                                            | concurrent tasks
+    +--------------------+  scrape   +------+-----+  generate  +----------------+
+    | Scraper Subsystem  |──────────►|  URL Task |───────────►|  LLM Service   |
+    | (Playwright / HTTP)|           +------------+           |  (OpenAI SDK)  |
+    +--------------------+                               ^    +----------------+
+          | cache insert                                | batch
+          v                                             |
+   +------+----------------+   taxonomy request         |
+   |  SQLite Cache Layer   | <───────────────────────────+
+   +-----------------------+
+          |
+          v
++---------+-----------+
+| Output Renderer     |
+| (Rich Tree / JSON)  |
++---------------------+
+```
+
+> **Note:** The Persistence Manager (AppleScript moves) is called only when `--save` is passed.
+
+### 3. Component Breakdown
+
+| #  | Component               | Responsibility                                                     | Key APIs / Packages                                         |
+| -- | ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| 1  | **CLI Front‑End**       | Parse args, route commands, display help.                          | `typer`, `rich-click`                                       |
+| 2  | **Controller**          | Orchestrates async pipeline, manages semaphores & cancellation.    | `asyncio`, `anyio`                                          |
+| 3  | **Bookmark Adapter**    | Extract Safari bookmarks to Python objects.                        | `osascript`, `py-applescript`, JSON schema `BookmarkRecord` |
+| 4  | **Scraper Subsystem**   | Retrieve textual content / metadata from each URL.                 | `playwright.async_api`, `httpx`, `readability-lxml`         |
+| 5  | **LLM Service**         | Calls OpenAI for (a) title+description and (b) taxonomy JSON.      | `openai>=1.0.0`, streaming handler                          |
+| 6  | **Cache Layer**         | Dedupes calls; stores scrape + LLM outputs.                        | `aiosqlite`, file `~/.ombm/cache.db`                        |
+| 7  | **Taxonomy Generator**  | Aggregates per‑link metadata, prompts GPT‑4o to suggest hierarchy. | `prompt_templates/taxonomy.jinja`                           |
+| 8  | **Output Renderer**     | Pretty tree, counts, optional JSON export.                         | `rich.tree`, `rich.console`, `json`                         |
+| 9  | **Persistence Manager** | Create Safari bookmark folders & move items when `--save`.         | AppleScript templates; dry‑run diff viewer                  |
+| 10 | **Logging & Telemetry** | Structured logs, timing, error analytics.                          | `structlog`, `sentry-sdk` (opt‑in)                          |
+
+### 4. Data Models
+
+```python
+@dataclass
+class BookmarkRecord:
+    uuid: str
+    title: str  # original safari title
+    url: str
+    created_at: datetime
+
+@dataclass
+class ScrapeResult:
+    url: str
+    text: str  # cleaned body text max 10k chars
+    html_title: str
+
+@dataclass
+class LLMMetadata:
+    url: str
+    name: str  # semantic title
+    description: str
+    tokens_used: int
+
+@dataclass
+class FolderNode:
+    name: str
+    children: List[Union['FolderNode', LLMMetadata]]
+```
+
+SQLite tables mirror these dataclasses with appropriate indices on `url` and `name`.
+
+### 5. Sequence Flow (Dry‑Run)
+
+1. **CLI** parses `ombm --max 500 --concurrency 8`.
+2. Controller heaps up to 500 `BookmarkRecord`s.
+3. For each bookmark:
+
+   1. Check cache → skip if hit.
+   2. Scraper fetches (`ScrapeResult`).
+   3. LLM ‑> `LLMMetadata`.
+4. After all metadata collected, Controller passes list to Taxonomy Generator.
+5. LLM returns JSON folder hierarchy → parsed into `FolderNode` tree.
+6. Output Renderer prints tree + stats (total tokens, elapsed time).
+7. Exit code 0.
+
+### 6. Concurrency Design
+
+```python
+sem = anyio.create_semaphore(args.concurrency)
+async def process(bookmark):
+    async with sem:
+        scrape = await scraper.fetch(bookmark)
+        meta = await llm.title_desc(scrape)
+        await cache.write(scrape, meta)
+```
+
+*Scraping* and *LLM* calls run within one task per bookmark; tasks await network/IO so CPU remains low.
+
+### 7. Error Handling & Retry Logic
+
+| Stage       | Error             | Retry Policy                    | Fallback                 |
+| ----------- | ----------------- | ------------------------------- | ------------------------ |
+| Scraper     | Timeout, 4xx/5xx  | 2 retries with exp. backoff     | Use `<title>` only       |
+| LLM call    | `RateLimitError`  | Wait ‑ jitter 5–15 s, 3 retries | Skip bookmark w/ warning |
+| AppleScript | Permission denied | Prompt user to grant automation | Abort `--save`           |
+
+### 8. Configuration & CLI Flags
+
+```
+om bm [OPTIONS]
+
+Core options:
+  --save                 Persist re‑org into Safari (default dry‑run)
+  --json-out PATH        Write resulting tree to JSON
+  --max INT              Limit number of bookmarks (∞ default)
+  --concurrency INT      Max concurrent fetch/LLM tasks (4 default)
+  --model TEXT           Override OpenAI model (gpt-4o)
+  --no-scrape            Use existing cache only
+  --verbose / -v         Increase log verbosity
+  --profile              Display timing & memory stats
+  --help                 Show this message
+```
+
+Defaults are read from `~/.ombm/config.toml` (created on first run).
+
+### 9. Security & Privacy
+
+* **Key storage:** OpenAI keys stored in macOS Keychain; accessed via `keyring`.
+* **PII:** Bookmark URLs may be sensitive → offer `--local-only` (blocks external fetch & LLM).
+* **Sandbox:** Binary signed & notarized; prompts user for Automation permission.
+
+### 10. Performance Benchmarks
+
+| Phase               | Target Avg Time (per 100 bookmarks) |
+| ------------------- | ----------------------------------- |
+| Bookmark export     | < 1 s                               |
+| Scrape (Playwright) | < 120 s total with concurrency 4    |
+| LLM metadata        | < 80 s (batched 20 per call)        |
+| Taxonomy prompt     | < 15 s                              |
+| Tree rendering      | < 1 s                               |
+
+### 11. Dependency Matrix
+
+| Package    | Version Pin | Rationale               |
+| ---------- | ----------- | ----------------------- |
+| python     | ^3.11       | Pattern‑matching + perf |
+| typer      | ^0.12       | CLI args                |
+| rich       | ^13         | Color + tree            |
+| playwright | ^1.44       | WebKit driver           |
+| openai     | ^1.16       | LLM API                 |
+| aiosqlite  | ^0.20       | async cache             |
+| structlog  | ^24         | structured logs         |
+| ruff       | ^0.4        | lint                    |
+
+### 12. Packaging & Distribution
+
+* `pyproject.toml` using **Hatch** build backend.
+* Create zipapp via **shiv** for Homebrew bottle ⇒ <10 MB.
+* GitHub Actions workflow:
+
+  1. Lint & type‑check
+  2. Run test matrix (macos‑12, macos‑14 ARM)
+  3. Build shiv binary
+  4. Publish PyPI + create Homebrew PR
+
+### 13. Logging & Observability
+
+* Log JSON to `~/.ombm/logs/ombm-YYYYMMDD.log`.
+* `--verbose` prints human‑friendly Rich logs.
+* Optional Sentry DSN ties errors to release SHA.
+
+### 14. Testing Strategy
+
+| Level       | Tooling                                                  | Coverage                              |
+| ----------- | -------------------------------------------------------- | ------------------------------------- |
+| Unit        | `pytest`, `pytest-asyncio`, `responses`                  | ≥ 85 % modules                        |
+| Integration | Live Playwright & mock LLM server                        | Scrape flow, taxonomy JSON validation |
+| E2E         | GitHub Actions macOS runner with Safari bookmarks sample | `ombm --dry-run` tree diff            |
+
+### 15. Future Hooks
+
+* Plugin interface via `entry_points="ombm.plugins"` for alt LLM providers.
+* GUI wrapper can import core package and reuse Controller.
+* Schedule mode implemented by adding `asyncio.EventLoop.run_forever()` + cron.
+
+---
+
+**Sign‑off:** Once this design is approved, development can start with milestone M1 (core pipeline & cache).
