@@ -9,7 +9,7 @@ import structlog
 
 def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
     """Configure structured logging for OMBM.
-    
+
     Args:
         verbose: Enable verbose logging (DEBUG level)
         json_output: Output logs as JSON lines
@@ -60,10 +60,10 @@ def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a configured logger instance.
-    
+
     Args:
         name: Logger name (typically __name__)
-        
+
     Returns:
         Configured structlog logger
     """
@@ -76,12 +76,12 @@ def log_execution_context(
     **kwargs: Any
 ) -> structlog.stdlib.BoundLogger:
     """Add execution context to logger.
-    
+
     Args:
         logger: Logger instance
         operation: Operation being performed
         **kwargs: Additional context fields
-        
+
     Returns:
         Logger with bound context
     """
@@ -100,7 +100,7 @@ def log_bookmark_processing(
     **kwargs: Any
 ) -> None:
     """Log bookmark processing with structured data.
-    
+
     Args:
         logger: Logger instance
         url: Bookmark URL
@@ -125,7 +125,7 @@ def log_performance_metrics(
     **kwargs: Any
 ) -> None:
     """Log performance metrics with structured data.
-    
+
     Args:
         logger: Logger instance
         operation: Operation name
@@ -153,7 +153,7 @@ def log_error_with_context(
     **kwargs: Any
 ) -> None:
     """Log error with structured context.
-    
+
     Args:
         logger: Logger instance
         error: Exception that occurred

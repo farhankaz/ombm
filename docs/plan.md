@@ -127,7 +127,7 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 | T‑02 | Set up Typer CLI entrypoint           | P1  | Cline | 🟢     | Completed: CLI working, script entry point fixed, all tests pass |
 | T‑03 | Implement structured logging baseline | P2  | Cline | 🟢     | Completed: structlog config, JSON logs in debug, CLI integration |
 | T‑04 | Create Bookmark adapter stub          | P1  | Cline | 🟢     | Completed: BookmarkAdapter with mocked data, models.py, comprehensive tests |
-| T‑05 | Implement SQLite cache schema         | P1  |       | ⚪️     |       |
+| T‑05 | Implement SQLite cache schema         | P1  | Cline | 🟢     | Completed: SQLite cache with aiosqlite, table creation, CRUD operations, comprehensive tests |
 | T‑06 | Global settings loader                | P2  |       | ⚪️     |       |
 | T‑11 | Playwright fetch helper               | P1  |       | ⚪️     |       |
 | T‑12 | Fallback HTTPX fetch                  | P1  |       | ⚪️     |       |
