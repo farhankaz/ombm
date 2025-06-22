@@ -129,13 +129,13 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 | T‑04 | Create Bookmark adapter stub          | P1  | Cline | 🟢     | Completed: BookmarkAdapter with mocked data, models.py, comprehensive tests |
 | T‑05 | Implement SQLite cache schema         | P1  | Cline | 🟢     | Completed: SQLite cache with aiosqlite, table creation, CRUD operations, comprehensive tests |
 | T‑06 | Global settings loader                | P2  | Cline | 🟢     | Completed: TOML config system, env overrides, comprehensive tests, 92% coverage |
-| T‑11 | Playwright fetch helper               | P1  |       | ⚪️     |       |
-| T‑12 | Fallback HTTPX fetch                  | P1  |       | ⚪️     |       |
-| T‑13 | Readability content cleaner           | P2  |       | ⚪️     |       |
-| T‑14 | Scraper error‑retry logic             | P1  |       | ⚪️     |       |
-| T‑15 | OpenAI title+desc prompt template     | P1  |       | ⚪️     |       |
-| T‑16 | LLM metadata function                 | P1  |       | ⚪️     |       |
-| T‑17 | Cache integration for scrape & LLM    | P1  |       | ⚪️     |       |
+| T‑11 | Playwright fetch helper               | P1  | Cline | 🟢     | Completed: PlaywrightScraper with async fetch, 89% coverage, content extraction ≥200 chars |
+| T‑12 | Fallback HTTPX fetch                  | P1  | Cline | 🟢     | Completed: HTTPXScraper fallback logic, WebScraper auto-failover, 403 error handling tested |
+| T‑13 | Readability content cleaner           | P2  | Cline | 🟢     | Completed: Readability + BeautifulSoup integration, 10k char truncation, HTML tag removal |
+| T‑14 | Scraper error‑retry logic             | P1  | Cline | 🟢     | Completed: Exponential backoff retry in LLM service, comprehensive error simulation tests |
+| T‑15 | OpenAI title+desc prompt template     | P1  | Cline | 🟢     | Completed: Jinja2 template with examples/schema, JSON field generation verified |
+| T‑16 | LLM metadata function                 | P1  | Cline | 🟢     | Completed: LLMService with OpenAI integration, 97% coverage, name/description generation |
+| T‑17 | Cache integration for scrape & LLM    | P1  | Cline | 🟢     | Completed: BookmarkProcessor pipeline, 95% coverage, E2E cache testing with no API calls |
 | T‑21 | Aggregate metadata collection         | P1  |       | ⚪️     |       |
 | T‑22 | Taxonomy prompt template              | P1  |       | ⚪️     |       |
 | T‑23 | LLM taxonomy generator                | P1  |       | ⚪️     |       |
