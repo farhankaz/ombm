@@ -7,6 +7,7 @@ the complete pipeline: scraping -> LLM metadata generation -> caching.
 
 import asyncio
 import logging
+from collections.abc import Callable
 
 from .cache import CacheManager
 from .llm import LLMError, LLMService
@@ -192,6 +193,7 @@ class BookmarkProcessor:
         bookmarks: list[BookmarkRecord],
         concurrency: int = 4,
         force_refresh: bool = False,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> list[ProcessingResult]:
         """
         Process multiple bookmarks concurrently.
@@ -200,6 +202,7 @@ class BookmarkProcessor:
             bookmarks: List of bookmarks to process
             concurrency: Maximum number of concurrent operations
             force_refresh: If True, skip cache and force fresh processing
+            progress_callback: Optional callback for progress updates (completed, total)
 
         Returns:
             List of ProcessingResult objects
@@ -210,12 +213,19 @@ class BookmarkProcessor:
 
         # Create semaphore to limit concurrency
         semaphore = asyncio.Semaphore(concurrency)
+        completed = 0
 
         async def process_with_semaphore(bookmark: BookmarkRecord) -> ProcessingResult:
+            nonlocal completed
             async with semaphore:
-                return await self.process_bookmark(
+                result = await self.process_bookmark(
                     bookmark, force_refresh=force_refresh
                 )
+                completed += 1
+                # Call progress callback if provided
+                if progress_callback:
+                    progress_callback(completed, len(bookmarks))
+                return result
 
         # Process all bookmarks concurrently
         tasks = [process_with_semaphore(bookmark) for bookmark in bookmarks]

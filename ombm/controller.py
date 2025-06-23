@@ -8,6 +8,7 @@ metadata aggregation, taxonomy generation, and tree rendering.
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
@@ -112,6 +113,7 @@ class BookmarkController:
         bookmarks: list[BookmarkRecord],
         concurrency: int = 4,
         force_refresh: bool = False,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> list[LLMMetadata]:
         """
         Process bookmarks through the pipeline to generate metadata.
@@ -120,6 +122,7 @@ class BookmarkController:
             bookmarks: List of bookmarks to process
             concurrency: Maximum concurrent operations
             force_refresh: Whether to skip cache and force fresh processing
+            progress_callback: Optional callback for progress updates (completed, total)
 
         Returns:
             List of LLMMetadata for successfully processed bookmarks
@@ -134,7 +137,10 @@ class BookmarkController:
 
         # Process all bookmarks
         results = await self.processor.process_bookmarks(
-            bookmarks, concurrency=concurrency, force_refresh=force_refresh
+            bookmarks,
+            concurrency=concurrency,
+            force_refresh=force_refresh,
+            progress_callback=progress_callback,
         )
 
         # Extract successful metadata
@@ -166,6 +172,7 @@ class BookmarkController:
         max_bookmarks: int | None = None,
         concurrency: int = 4,
         force_refresh: bool = False,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> list[LLMMetadata]:
         """
         Complete pipeline from bookmark retrieval to metadata aggregation.
@@ -177,6 +184,7 @@ class BookmarkController:
             max_bookmarks: Maximum number of bookmarks to process
             concurrency: Maximum concurrent operations
             force_refresh: Whether to skip cache and force fresh processing
+            progress_callback: Optional callback for progress updates (completed, total)
 
         Returns:
             List of LLMMetadata objects for all successfully processed bookmarks
@@ -196,7 +204,10 @@ class BookmarkController:
 
             # Step 2: Process bookmarks to metadata
             metadata_list = await self.process_bookmarks_to_metadata(
-                bookmarks, concurrency=concurrency, force_refresh=force_refresh
+                bookmarks,
+                concurrency=concurrency,
+                force_refresh=force_refresh,
+                progress_callback=progress_callback,
             )
 
             logger.info(

@@ -1,10 +1,19 @@
 """Main CLI entrypoint for OMBM."""
 
 import asyncio
-from typing import Annotated
+from contextlib import asynccontextmanager
+from typing import Annotated, AsyncGenerator
+from collections.abc import Callable
 
 import typer
 from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
 
 from ombm import __version__
 from ombm.controller import BookmarkController
@@ -204,6 +213,32 @@ def organize(
         raise typer.Exit(code=1) from e
 
 
+@asynccontextmanager
+async def progress_context(total: int, show_progress: bool = True) -> AsyncGenerator[Callable[[int, int], None], None]:
+    """Context manager for progress tracking during bookmark processing."""
+    if not show_progress or total < 10:
+        # Don't show progress bar for small numbers or when disabled
+        yield lambda _completed, _total: None
+        return
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        TextColumn("({task.completed}/{task.total})"),
+        TimeElapsedColumn(),
+        console=Console(),
+        expand=True,
+    ) as progress:
+        task_id = progress.add_task("Processing bookmarks...", total=total)
+
+        def update_progress(completed: int, total: int) -> None:
+            progress.update(task_id, completed=completed)
+
+        yield update_progress
+
+
 async def run_organization_pipeline(
     max_bookmarks: int,
     concurrency: int,
@@ -220,17 +255,33 @@ async def run_organization_pipeline(
     async with BookmarkController(
         persistence_manager=persistence_manager
     ) as controller:
-        # Step 1: Aggregate metadata
-        if not quiet:
-            console.print("\n[bold]Step 1: Processing bookmarks...[/bold]")
-        metadata_list = await controller.aggregate_metadata_collection(
-            max_bookmarks=max_bookmarks if max_bookmarks > 0 else None,
-            concurrency=concurrency,
-            force_refresh=force_refresh,
+        # Step 1: Get bookmarks to determine total for progress bar
+        bookmarks = await controller.get_bookmarks(
+            max_bookmarks=max_bookmarks if max_bookmarks > 0 else None
         )
 
-        if not metadata_list:
+        if not bookmarks:
             console.print("[yellow]No bookmarks to process. Exiting.[/yellow]")
+            return
+
+        # Step 1: Aggregate metadata with progress bar
+        if not quiet:
+            console.print(
+                f"\n[bold]Step 1: Processing {len(bookmarks)} bookmarks...[/bold]"
+            )
+
+        async with progress_context(
+            len(bookmarks), show_progress=not quiet
+        ) as progress_callback:
+            metadata_list = await controller.aggregate_metadata_collection(
+                max_bookmarks=max_bookmarks if max_bookmarks > 0 else None,
+                concurrency=concurrency,
+                force_refresh=force_refresh,
+                progress_callback=progress_callback,
+            )
+
+        if not metadata_list:
+            console.print("[yellow]No metadata generated. Exiting.[/yellow]")
             return
 
         # Step 2: Generate Taxonomy

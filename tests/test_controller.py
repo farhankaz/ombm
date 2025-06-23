@@ -202,7 +202,7 @@ class TestBookmarkController:
         assert len(result) == 2
         assert result == sample_metadata
         mock_processor.process_bookmarks.assert_called_once_with(
-            sample_bookmarks, concurrency=4, force_refresh=False
+            sample_bookmarks, concurrency=4, force_refresh=False, progress_callback=None
         )
 
     @pytest.mark.asyncio
