@@ -1,0 +1,16 @@
+tell application "Safari"
+	try
+		-- Find the bookmark by its URL
+		set the_bookmark to (first bookmark whose URL is "{{ bookmark_url }}")
+		
+		-- Find the destination folder by its name
+		set the_folder to (first bookmark folder whose name is "{{ folder_name }}")
+		
+		-- Move the bookmark into the folder
+		move the_bookmark to the_folder
+		
+		return "success"
+	on error
+		return "error: could not move bookmark"
+	end try
+end tell 

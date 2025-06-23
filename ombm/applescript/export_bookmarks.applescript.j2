@@ -1,0 +1,54 @@
+-- This script exports all Safari bookmarks to a JSON-like string.
+-- It recursively processes folders to get all bookmarks.
+
+property pJSONList : {}
+
+on main()
+	tell application "Safari"
+		set pJSONList to {}
+		my processContainer(bookmarks)
+		
+		-- Build the final JSON string
+		set oldDelimiters to AppleScript's text item delimiters
+		set AppleScript's text item delimiters to ","
+		set jsonString to "[" & (pJSONList as text) & "]"
+		set AppleScript's text item delimiters to oldDelimiters
+		return jsonString
+	end tell
+end main
+
+on processContainer(theContainer)
+	tell application "Safari"
+		-- Process bookmarks in the current container
+		repeat with aBookmark in (every bookmark of theContainer)
+			set bmName to name of aBookmark
+			set bmURL to URL of aBookmark
+			if bmURL is not missing value then
+				set escapedName to my escape_json_string(bmName)
+				set escapedURL to my escape_json_string(bmURL)
+				set jsonObject to "{\"name\": \"" & escapedName & "\", \"url\": \"" & escapedURL & "\"}"
+				set end of pJSONList to jsonObject
+			end if
+		end repeat
+		
+		-- Recursively process sub-folders
+		repeat with aFolder in (every bookmark folder of theContainer)
+			my processContainer(aFolder)
+		end repeat
+	end tell
+end processContainer
+
+on escape_json_string(the_string)
+	set the_string to a reference to the_string
+	if the_string contains "\\" then set the_string to text 1 thru -2 of (the_string's text items joined by "\\\\")
+	if the_string contains "\"" then set the_string to text 1 thru -2 of (the_string's text items joined by "\\\"")
+	if the_string contains "/" then set the_string to text 1 thru -2 of (the_string's text items joined by "\\/")
+	if the_string contains "
+" then set the_string to text 1 thru -2 of (the_string's text items joined by "\\n")
+	if the_string contains "\r" then set the_string to text 1 thru -2 of (the_string's text items joined by "\\r")
+	if the_string contains "\t" then set the_string to text 1 thru -2 of (the_string's text items joined by "\\t")
+	return the_string as text
+end escape_json_string
+
+-- Run the main handler
+main() 

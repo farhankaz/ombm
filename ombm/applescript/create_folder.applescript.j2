@@ -1,0 +1,6 @@
+tell application "Safari"
+	-- Check if a folder with the same name already exists at the top level
+	if not (exists bookmark folder "{{ folder_name }}") then
+		make new bookmark folder with properties {name:"{{ folder_name }}"}
+	end if
+end tell 
