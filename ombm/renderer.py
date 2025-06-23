@@ -45,7 +45,7 @@ class TreeRenderer:
         root: FolderNode,
         show_descriptions: bool = True,
         show_urls: bool = False,
-        max_url_length: int = 60
+        max_url_length: int = 60,
     ) -> Tree:
         """
         Render a FolderNode structure as a Rich Tree.
@@ -65,10 +65,7 @@ class TreeRenderer:
         self.stats = {"total_folders": 0, "total_bookmarks": 0, "max_depth": 0}
 
         # Create root tree
-        tree = Tree(
-            f"[bold blue]{root.name}[/bold blue]",
-            guide_style="dim cyan"
-        )
+        tree = Tree(f"[bold blue]{root.name}[/bold blue]", guide_style="dim cyan")
 
         # Render children recursively
         self._render_children(
@@ -77,7 +74,7 @@ class TreeRenderer:
             depth=0,
             show_descriptions=show_descriptions,
             show_urls=show_urls,
-            max_url_length=max_url_length
+            max_url_length=max_url_length,
         )
 
         logger.debug(
@@ -95,7 +92,7 @@ class TreeRenderer:
         depth: int,
         show_descriptions: bool,
         show_urls: bool,
-        max_url_length: int
+        max_url_length: int,
     ) -> None:
         """
         Recursively render children nodes.
@@ -132,9 +129,13 @@ class TreeRenderer:
             if folder_stats["bookmarks"] > 0 or folder_stats["subfolders"] > 0:
                 count_text = []
                 if folder_stats["bookmarks"] > 0:
-                    count_text.append(f"{folder_stats['bookmarks']} bookmark{'s' if folder_stats['bookmarks'] != 1 else ''}")
+                    count_text.append(
+                        f"{folder_stats['bookmarks']} bookmark{'s' if folder_stats['bookmarks'] != 1 else ''}"
+                    )
                 if folder_stats["subfolders"] > 0:
-                    count_text.append(f"{folder_stats['subfolders']} folder{'s' if folder_stats['subfolders'] != 1 else ''}")
+                    count_text.append(
+                        f"{folder_stats['subfolders']} folder{'s' if folder_stats['subfolders'] != 1 else ''}"
+                    )
 
                 folder_label.append(f" ({', '.join(count_text)})", style="dim")
 
@@ -148,18 +149,14 @@ class TreeRenderer:
                 depth + 1,
                 show_descriptions,
                 show_urls,
-                max_url_length
+                max_url_length,
             )
 
         # Render bookmarks
         for bookmark in bookmarks:
             self.stats["total_bookmarks"] += 1
             self._render_bookmark(
-                parent_tree,
-                bookmark,
-                show_descriptions,
-                show_urls,
-                max_url_length
+                parent_tree, bookmark, show_descriptions, show_urls, max_url_length
             )
 
     def _render_bookmark(
@@ -168,7 +165,7 @@ class TreeRenderer:
         bookmark: LLMMetadata,
         show_descriptions: bool,
         show_urls: bool,
-        max_url_length: int
+        max_url_length: int,
     ) -> None:
         """
         Render a single bookmark.
@@ -193,7 +190,7 @@ class TreeRenderer:
         if show_urls:
             url_display = bookmark.url
             if len(url_display) > max_url_length:
-                url_display = url_display[:max_url_length-3] + "..."
+                url_display = url_display[: max_url_length - 3] + "..."
             bookmark_text.append(f"\n   🔗 {url_display}", style="dim cyan")
 
         parent_tree.add(bookmark_text)
@@ -208,8 +205,12 @@ class TreeRenderer:
         Returns:
             Dictionary with counts of bookmarks and subfolders
         """
-        bookmarks = sum(1 for child in folder.children if isinstance(child, LLMMetadata))
-        subfolders = sum(1 for child in folder.children if isinstance(child, FolderNode))
+        bookmarks = sum(
+            1 for child in folder.children if isinstance(child, LLMMetadata)
+        )
+        subfolders = sum(
+            1 for child in folder.children if isinstance(child, FolderNode)
+        )
 
         return {"bookmarks": bookmarks, "subfolders": subfolders}
 
@@ -243,7 +244,7 @@ class TreeRenderer:
             table,
             title="[bold]Bookmark Organization Summary[/bold]",
             title_align="left",
-            border_style="blue"
+            border_style="blue",
         )
 
     def _calculate_comprehensive_stats(self, node: FolderNode, depth: int = 0) -> dict:
@@ -283,9 +284,12 @@ class TreeRenderer:
         if depth == 0:
             stats["avg_bookmarks"] = (
                 stats["total_bookmarks"] / stats["total_folders"]
-                if stats["total_folders"] > 0 else 0
+                if stats["total_folders"] > 0
+                else 0
             )
-            stats["largest_folder_size"] = max(stats["folder_sizes"]) if stats["folder_sizes"] else 0
+            stats["largest_folder_size"] = (
+                max(stats["folder_sizes"]) if stats["folder_sizes"] else 0
+            )
 
         return stats
 
@@ -295,7 +299,7 @@ class TreeRenderer:
         show_descriptions: bool = True,
         show_urls: bool = False,
         show_summary: bool = True,
-        max_url_length: int = 60
+        max_url_length: int = 60,
     ) -> None:
         """
         Print the tree to the console.
@@ -312,7 +316,7 @@ class TreeRenderer:
             root,
             show_descriptions=show_descriptions,
             show_urls=show_urls,
-            max_url_length=max_url_length
+            max_url_length=max_url_length,
         )
 
         self.console.print()
@@ -340,7 +344,7 @@ def render_bookmark_tree(
     show_descriptions: bool = True,
     show_urls: bool = False,
     show_summary: bool = True,
-    max_url_length: int = 60
+    max_url_length: int = 60,
 ) -> None:
     """
     Convenience function to render and print a bookmark tree.
@@ -359,7 +363,7 @@ def render_bookmark_tree(
         show_descriptions=show_descriptions,
         show_urls=show_urls,
         show_summary=show_summary,
-        max_url_length=max_url_length
+        max_url_length=max_url_length,
     )
 
 
@@ -367,7 +371,7 @@ def tree_to_rich(
     root: FolderNode,
     show_descriptions: bool = True,
     show_urls: bool = False,
-    max_url_length: int = 60
+    max_url_length: int = 60,
 ) -> Tree:
     """
     Convenience function to convert FolderNode to Rich Tree.
@@ -386,5 +390,5 @@ def tree_to_rich(
         root,
         show_descriptions=show_descriptions,
         show_urls=show_urls,
-        max_url_length=max_url_length
+        max_url_length=max_url_length,
     )

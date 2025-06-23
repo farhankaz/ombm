@@ -24,19 +24,19 @@ def sample_metadata():
             url="https://example.com",
             name="Example Website",
             description="A sample website for testing",
-            tokens_used=50
+            tokens_used=50,
         ),
         LLMMetadata(
             url="https://test.blog",
             name="Test Blog Site",
             description="A blog for testing purposes",
-            tokens_used=45
+            tokens_used=45,
         ),
         LLMMetadata(
             url="https://github.com/user/repo",
             name="GitHub Repository",
             description="Open source code repository",
-            tokens_used=40
+            tokens_used=40,
         ),
     ]
 
@@ -52,7 +52,7 @@ def valid_taxonomy_json():
                     {
                         "url": "https://github.com/user/repo",
                         "name": "GitHub Repository",
-                        "description": "Open source code repository"
+                        "description": "Open source code repository",
                     }
                 ],
                 "subfolders": [
@@ -62,12 +62,12 @@ def valid_taxonomy_json():
                             {
                                 "url": "https://example.com",
                                 "name": "Example Website",
-                                "description": "A sample website for testing"
+                                "description": "A sample website for testing",
                             }
                         ],
-                        "subfolders": []
+                        "subfolders": [],
                     }
-                ]
+                ],
             },
             {
                 "name": "Blogs",
@@ -75,11 +75,11 @@ def valid_taxonomy_json():
                     {
                         "url": "https://test.blog",
                         "name": "Test Blog Site",
-                        "description": "A blog for testing purposes"
+                        "description": "A blog for testing purposes",
                     }
                 ],
-                "subfolders": []
-            }
+                "subfolders": [],
+            },
         ]
     }
 
@@ -144,11 +144,7 @@ class TestTaxonomyParser:
 
     def test_parse_folder_empty_name(self, parser, sample_metadata):
         """Test parsing folder with empty name."""
-        invalid_json = {
-            "folders": [
-                {"name": "", "bookmarks": [], "subfolders": []}
-            ]
-        }
+        invalid_json = {"folders": [{"name": "", "bookmarks": [], "subfolders": []}]}
 
         with pytest.raises(TreeBuilderError, match="cannot be empty"):
             parser.parse_taxonomy(invalid_json, sample_metadata)
@@ -162,7 +158,7 @@ class TestTaxonomyParser:
                     "bookmarks": [
                         {"name": "Test", "description": "Test"}  # Missing URL
                     ],
-                    "subfolders": []
+                    "subfolders": [],
                 }
             ]
         }
@@ -184,10 +180,10 @@ class TestTaxonomyParser:
                         {
                             "url": "https://example.com",
                             "name": "Example 1",
-                            "description": "First instance"
+                            "description": "First instance",
                         }
                     ],
-                    "subfolders": []
+                    "subfolders": [],
                 },
                 {
                     "name": "Folder 2",
@@ -195,11 +191,11 @@ class TestTaxonomyParser:
                         {
                             "url": "https://example.com",  # Duplicate
                             "name": "Example 2",
-                            "description": "Second instance"
+                            "description": "Second instance",
                         }
                     ],
-                    "subfolders": []
-                }
+                    "subfolders": [],
+                },
             ]
         }
 
@@ -226,10 +222,10 @@ class TestTaxonomyParser:
                         {
                             "url": "https://unknown.com",
                             "name": "Unknown Site",
-                            "description": "Not in metadata"
+                            "description": "Not in metadata",
                         }
                     ],
-                    "subfolders": []
+                    "subfolders": [],
                 }
             ]
         }
@@ -239,7 +235,7 @@ class TestTaxonomyParser:
                 url="https://example.com",
                 name="Example",
                 description="Known site",
-                tokens_used=30
+                tokens_used=30,
             )
         ]
 
@@ -260,10 +256,10 @@ class TestTaxonomyParser:
                         {
                             "url": "https://example.com",
                             "name": "Example Website",
-                            "description": "A sample website for testing"
+                            "description": "A sample website for testing",
                         }
                     ],
-                    "subfolders": []
+                    "subfolders": [],
                 }
             ]
         }
@@ -352,7 +348,7 @@ class TestConvenienceFunctions:
                 {
                     "name": "Test",
                     "bookmarks": "not_a_list",  # Should be list
-                    "subfolders": []
+                    "subfolders": [],
                 }
             ]
         }
@@ -365,7 +361,7 @@ class TestConvenienceFunctions:
                 {
                     "name": "Test",
                     "bookmarks": [],
-                    "subfolders": "not_a_list"  # Should be list
+                    "subfolders": "not_a_list",  # Should be list
                 }
             ]
         }
@@ -382,6 +378,7 @@ class TestConvenienceFunctions:
 
     def test_validate_taxonomy_json_exception_handling(self):
         """Test validation handles exceptions gracefully."""
+
         # Create an object that will cause an exception during validation
         class BadObject:
             def __getitem__(self, key):

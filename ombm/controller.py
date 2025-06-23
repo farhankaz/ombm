@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ControllerError(Exception):
     """Base exception for controller-related errors."""
+
     pass
 
 
@@ -63,7 +64,9 @@ class BookmarkController:
         if self._processor_context is not None:
             await self.processor.__aexit__(exc_type, exc_val, exc_tb)
 
-    async def get_bookmarks(self, max_bookmarks: int | None = None) -> list[BookmarkRecord]:
+    async def get_bookmarks(
+        self, max_bookmarks: int | None = None
+    ) -> list[BookmarkRecord]:
         """
         Retrieve bookmarks from Safari.
 
@@ -183,7 +186,9 @@ class BookmarkController:
                 bookmarks, concurrency=concurrency, force_refresh=force_refresh
             )
 
-            logger.info(f"Aggregate metadata collection complete: {len(metadata_list)} items")
+            logger.info(
+                f"Aggregate metadata collection complete: {len(metadata_list)} items"
+            )
             return metadata_list
 
         except Exception as e:
@@ -208,7 +213,7 @@ class BookmarkController:
         self,
         metadata_list: list[LLMMetadata],
         output_path: str | Path,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> None:
         """
         Export bookmark metadata to JSON file.
@@ -245,11 +250,11 @@ class BookmarkController:
                     "export_timestamp": asyncio.get_event_loop().time(),
                     "bookmark_count": len(metadata_list),
                     "total_tokens": sum(meta.tokens_used for meta in metadata_list),
-                    "format_version": "1.0"
+                    "format_version": "1.0",
                 }
 
             # Write JSON file
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Exported {len(metadata_list)} bookmarks to {output_path}")
@@ -262,7 +267,7 @@ class BookmarkController:
         self,
         taxonomy_data: dict,
         output_path: str | Path,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> None:
         """
         Export taxonomy hierarchy to JSON file.
@@ -287,25 +292,24 @@ class BookmarkController:
             if include_metadata and "_metadata" not in export_data:
                 export_data["_metadata"] = {
                     "export_timestamp": asyncio.get_event_loop().time(),
-                    "format_version": "1.0"
+                    "format_version": "1.0",
                 }
 
             # Write JSON file
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             folder_count = len(export_data.get("folders", []))
-            logger.info(f"Exported taxonomy with {folder_count} folders to {output_path}")
+            logger.info(
+                f"Exported taxonomy with {folder_count} folders to {output_path}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to export taxonomy to JSON: {e}")
             raise ControllerError(f"Taxonomy JSON export failed: {e}") from e
 
     def export_folder_tree_to_json(
-        self,
-        root: FolderNode,
-        output_path: str | Path,
-        include_metadata: bool = True
+        self, root: FolderNode, output_path: str | Path, include_metadata: bool = True
     ) -> None:
         """
         Export FolderNode tree structure to JSON file.
@@ -330,27 +334,26 @@ class BookmarkController:
 
                 for child in node.children:
                     if isinstance(child, FolderNode):
-                        result["children"].append({
-                            "type": "folder",
-                            "data": folder_to_dict(child)
-                        })
+                        result["children"].append(
+                            {"type": "folder", "data": folder_to_dict(child)}
+                        )
                     else:  # LLMMetadata
-                        result["children"].append({
-                            "type": "bookmark",
-                            "data": {
-                                "url": child.url,
-                                "name": child.name,
-                                "description": child.description,
-                                "tokens_used": child.tokens_used,
+                        result["children"].append(
+                            {
+                                "type": "bookmark",
+                                "data": {
+                                    "url": child.url,
+                                    "name": child.name,
+                                    "description": child.description,
+                                    "tokens_used": child.tokens_used,
+                                },
                             }
-                        })
+                        )
 
                 return result
 
             # Prepare export data
-            export_data = {
-                "tree": folder_to_dict(root)
-            }
+            export_data = {"tree": folder_to_dict(root)}
 
             if include_metadata:
                 # Calculate stats
@@ -361,11 +364,11 @@ class BookmarkController:
                     "export_timestamp": asyncio.get_event_loop().time(),
                     "total_folders": total_folders,
                     "total_bookmarks": total_bookmarks,
-                    "format_version": "1.0"
+                    "format_version": "1.0",
                 }
 
             # Write JSON file
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Exported folder tree to {output_path}")

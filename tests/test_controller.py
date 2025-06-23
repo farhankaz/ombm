@@ -29,13 +29,13 @@ def sample_bookmarks():
             uuid="1",
             title="Example Site",
             url="https://example.com",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         ),
         BookmarkRecord(
             uuid="2",
             title="Test Blog",
             url="https://test.blog",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         ),
     ]
 
@@ -48,13 +48,13 @@ def sample_metadata():
             url="https://example.com",
             name="Example Website",
             description="A sample website for testing",
-            tokens_used=50
+            tokens_used=50,
         ),
         LLMMetadata(
             url="https://test.blog",
             name="Test Blog Site",
             description="A blog for testing purposes",
-            tokens_used=45
+            tokens_used=45,
         ),
     ]
 
@@ -72,9 +72,9 @@ def sample_folder_tree():
                         url="https://example.com",
                         name="Example Website",
                         description="A sample website for testing",
-                        tokens_used=50
+                        tokens_used=50,
                     )
-                ]
+                ],
             ),
             FolderNode(
                 name="Blogs",
@@ -83,11 +83,11 @@ def sample_folder_tree():
                         url="https://test.blog",
                         name="Test Blog Site",
                         description="A blog for testing purposes",
-                        tokens_used=45
+                        tokens_used=45,
                     )
-                ]
-            )
-        ]
+                ],
+            ),
+        ],
     )
 
 
@@ -115,8 +115,7 @@ class TestBookmarkController:
     def controller(self, mock_bookmark_adapter, mock_processor):
         """Controller instance with mocked dependencies."""
         return BookmarkController(
-            bookmark_adapter=mock_bookmark_adapter,
-            processor=mock_processor
+            bookmark_adapter=mock_bookmark_adapter, processor=mock_processor
         )
 
     @pytest.mark.asyncio
@@ -130,7 +129,9 @@ class TestBookmarkController:
         mock_processor.__aexit__.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_bookmarks_success(self, controller, mock_bookmark_adapter, sample_bookmarks):
+    async def test_get_bookmarks_success(
+        self, controller, mock_bookmark_adapter, sample_bookmarks
+    ):
         """Test successful bookmark retrieval."""
         mock_bookmark_adapter.get_bookmarks.return_value = sample_bookmarks
 
@@ -141,7 +142,9 @@ class TestBookmarkController:
         mock_bookmark_adapter.get_bookmarks.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_bookmarks_with_limit(self, controller, mock_bookmark_adapter, sample_bookmarks):
+    async def test_get_bookmarks_with_limit(
+        self, controller, mock_bookmark_adapter, sample_bookmarks
+    ):
         """Test bookmark retrieval with limit."""
         mock_bookmark_adapter.get_bookmarks.return_value = sample_bookmarks
 
@@ -159,20 +162,20 @@ class TestBookmarkController:
             await controller.get_bookmarks()
 
     @pytest.mark.asyncio
-    async def test_process_bookmarks_to_metadata_success(self, controller, mock_processor, sample_bookmarks, sample_metadata):
+    async def test_process_bookmarks_to_metadata_success(
+        self, controller, mock_processor, sample_bookmarks, sample_metadata
+    ):
         """Test successful metadata processing."""
         # Mock successful processing results
         from ombm.pipeline import ProcessingResult
 
         results = [
             ProcessingResult(
-                bookmark=sample_bookmarks[0],
-                llm_metadata=sample_metadata[0]
+                bookmark=sample_bookmarks[0], llm_metadata=sample_metadata[0]
             ),
             ProcessingResult(
-                bookmark=sample_bookmarks[1],
-                llm_metadata=sample_metadata[1]
-            )
+                bookmark=sample_bookmarks[1], llm_metadata=sample_metadata[1]
+            ),
         ]
 
         mock_processor.process_bookmarks.return_value = results
@@ -186,24 +189,23 @@ class TestBookmarkController:
         )
 
     @pytest.mark.asyncio
-    async def test_process_bookmarks_with_errors(self, controller, mock_processor, sample_bookmarks):
+    async def test_process_bookmarks_with_errors(
+        self, controller, mock_processor, sample_bookmarks
+    ):
         """Test metadata processing with some errors."""
         from ombm.pipeline import ProcessingResult
 
         results = [
-            ProcessingResult(
-                bookmark=sample_bookmarks[0],
-                error="Scraping failed"
-            ),
+            ProcessingResult(bookmark=sample_bookmarks[0], error="Scraping failed"),
             ProcessingResult(
                 bookmark=sample_bookmarks[1],
                 llm_metadata=LLMMetadata(
                     url=sample_bookmarks[1].url,
                     name="Test Blog",
                     description="Test description",
-                    tokens_used=30
-                )
-            )
+                    tokens_used=30,
+                ),
+            ),
         ]
 
         mock_processor.process_bookmarks.return_value = results
@@ -214,13 +216,21 @@ class TestBookmarkController:
         assert result[0].url == sample_bookmarks[1].url
 
     @pytest.mark.asyncio
-    async def test_aggregate_metadata_collection(self, controller, mock_bookmark_adapter, mock_processor, sample_bookmarks, sample_metadata):
+    async def test_aggregate_metadata_collection(
+        self,
+        controller,
+        mock_bookmark_adapter,
+        mock_processor,
+        sample_bookmarks,
+        sample_metadata,
+    ):
         """Test complete metadata aggregation pipeline."""
         # Mock bookmark retrieval
         mock_bookmark_adapter.get_bookmarks.return_value = sample_bookmarks
 
         # Mock processing results
         from ombm.pipeline import ProcessingResult
+
         results = [
             ProcessingResult(bookmark=b, llm_metadata=m)
             for b, m in zip(sample_bookmarks, sample_metadata, strict=False)
@@ -228,7 +238,9 @@ class TestBookmarkController:
         mock_processor.process_bookmarks.return_value = results
 
         async with controller:
-            result = await controller.aggregate_metadata_collection(max_bookmarks=10, concurrency=2)
+            result = await controller.aggregate_metadata_collection(
+                max_bookmarks=10, concurrency=2
+            )
 
         assert len(result) == 2
         assert result == sample_metadata
@@ -277,9 +289,13 @@ class TestBookmarkController:
                 {
                     "name": "Development",
                     "bookmarks": [
-                        {"url": "https://example.com", "name": "Example", "description": "Test"}
+                        {
+                            "url": "https://example.com",
+                            "name": "Example",
+                            "description": "Test",
+                        }
                     ],
-                    "subfolders": []
+                    "subfolders": [],
                 }
             ]
         }
@@ -333,13 +349,13 @@ class TestBookmarkController:
 @pytest.mark.asyncio
 async def test_aggregate_bookmark_metadata_convenience_function():
     """Test the convenience function for metadata aggregation."""
-    with patch('ombm.controller.BookmarkProcessor') as mock_processor_class:
+    with patch("ombm.controller.BookmarkProcessor") as mock_processor_class:
         mock_processor = AsyncMock()
         mock_processor.__aenter__ = AsyncMock(return_value=mock_processor)
         mock_processor.__aexit__ = AsyncMock()
         mock_processor_class.return_value = mock_processor
 
-        with patch('ombm.controller.BookmarkController') as mock_controller_class:
+        with patch("ombm.controller.BookmarkController") as mock_controller_class:
             mock_controller = AsyncMock()
             mock_controller.__aenter__ = AsyncMock(return_value=mock_controller)
             mock_controller.__aexit__ = AsyncMock()
@@ -347,16 +363,11 @@ async def test_aggregate_bookmark_metadata_convenience_function():
             mock_controller_class.return_value = mock_controller
 
             result = await aggregate_bookmark_metadata(
-                max_bookmarks=10,
-                concurrency=2,
-                force_refresh=True,
-                use_cache=False
+                max_bookmarks=10, concurrency=2, force_refresh=True, use_cache=False
             )
 
             assert result == []
             mock_processor_class.assert_called_once_with(use_cache=False)
             mock_controller.aggregate_metadata_collection.assert_called_once_with(
-                max_bookmarks=10,
-                concurrency=2,
-                force_refresh=True
+                max_bookmarks=10, concurrency=2, force_refresh=True
             )

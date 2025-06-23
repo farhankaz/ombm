@@ -29,19 +29,19 @@ def sample_metadata():
             url="https://example.com",
             name="Example Website",
             description="A sample website for testing",
-            tokens_used=50
+            tokens_used=50,
         ),
         LLMMetadata(
             url="https://test.blog",
             name="Test Blog Site",
             description="A blog for testing purposes",
-            tokens_used=45
+            tokens_used=45,
         ),
         LLMMetadata(
             url="https://github.com/user/repo",
             name="GitHub Repository",
             description="Open source code repository",
-            tokens_used=40
+            tokens_used=40,
         ),
     ]
 
@@ -59,15 +59,15 @@ def simple_folder_tree():
                         url="https://github.com/user/repo",
                         name="GitHub Repository",
                         description="Open source code repository",
-                        tokens_used=40
+                        tokens_used=40,
                     ),
                     LLMMetadata(
                         url="https://example.com",
                         name="Example Website",
                         description="A sample website for testing",
-                        tokens_used=50
-                    )
-                ]
+                        tokens_used=50,
+                    ),
+                ],
             ),
             FolderNode(
                 name="Blogs",
@@ -76,11 +76,11 @@ def simple_folder_tree():
                         url="https://test.blog",
                         name="Test Blog Site",
                         description="A blog for testing purposes",
-                        tokens_used=45
+                        tokens_used=45,
                     )
-                ]
-            )
-        ]
+                ],
+            ),
+        ],
     )
 
 
@@ -100,9 +100,9 @@ def nested_folder_tree():
                                 url="https://example.com",
                                 name="Example Website",
                                 description="A sample website for testing",
-                                tokens_used=50
+                                tokens_used=50,
                             )
-                        ]
+                        ],
                     ),
                     FolderNode(
                         name="Version Control",
@@ -111,11 +111,11 @@ def nested_folder_tree():
                                 url="https://github.com/user/repo",
                                 name="GitHub Repository",
                                 description="Open source code repository",
-                                tokens_used=40
+                                tokens_used=40,
                             )
-                        ]
-                    )
-                ]
+                        ],
+                    ),
+                ],
             ),
             FolderNode(
                 name="Reading",
@@ -124,11 +124,11 @@ def nested_folder_tree():
                         url="https://test.blog",
                         name="Test Blog Site",
                         description="A blog for testing purposes",
-                        tokens_used=45
+                        tokens_used=45,
                     )
-                ]
-            )
-        ]
+                ],
+            ),
+        ],
     )
 
 
@@ -156,7 +156,11 @@ class TestTreeRenderer:
         renderer = TreeRenderer()
         assert renderer.console is not None
         assert isinstance(renderer.console, Console)
-        assert renderer.stats == {"total_folders": 0, "total_bookmarks": 0, "max_depth": 0}
+        assert renderer.stats == {
+            "total_folders": 0,
+            "total_bookmarks": 0,
+            "max_depth": 0,
+        }
 
     def test_init_custom_console(self, console):
         """Test renderer initialization with custom console."""
@@ -172,7 +176,9 @@ class TestTreeRenderer:
 
         # Check stats
         stats = renderer.get_rendering_stats()
-        assert stats["total_folders"] == 2  # Development + Blogs (root not counted in stats)
+        assert (
+            stats["total_folders"] == 2
+        )  # Development + Blogs (root not counted in stats)
         assert stats["total_bookmarks"] == 3
         assert stats["max_depth"] == 1  # Folder children are processed at depth 1
 
@@ -189,7 +195,9 @@ class TestTreeRenderer:
 
         # Check stats
         stats = renderer.get_rendering_stats()
-        assert stats["total_folders"] == 4  # Development, Reading, Web Development, Version Control
+        assert (
+            stats["total_folders"] == 4
+        )  # Development, Reading, Web Development, Version Control
         assert stats["total_bookmarks"] == 3
         assert stats["max_depth"] == 2  # Nested folders go to depth 2
 
@@ -230,7 +238,9 @@ class TestTreeRenderer:
 
     def test_render_tree_url_truncation(self, renderer, simple_folder_tree):
         """Test URL truncation in tree rendering."""
-        tree = renderer.render_tree(simple_folder_tree, show_urls=True, max_url_length=10)
+        tree = renderer.render_tree(
+            simple_folder_tree, show_urls=True, max_url_length=10
+        )
 
         assert isinstance(tree, Tree)
         # URLs longer than 10 chars should be truncated
@@ -240,10 +250,20 @@ class TestTreeRenderer:
         folder = FolderNode(
             name="Test Folder",
             children=[
-                LLMMetadata(url="https://example.com", name="Test", description="", tokens_used=10),
-                LLMMetadata(url="https://test.com", name="Test 2", description="", tokens_used=10),
-                FolderNode(name="Subfolder", children=[])
-            ]
+                LLMMetadata(
+                    url="https://example.com",
+                    name="Test",
+                    description="",
+                    tokens_used=10,
+                ),
+                LLMMetadata(
+                    url="https://test.com",
+                    name="Test 2",
+                    description="",
+                    tokens_used=10,
+                ),
+                FolderNode(name="Subfolder", children=[]),
+            ],
         )
 
         counts = renderer._count_folder_contents(folder)
@@ -265,7 +285,9 @@ class TestTreeRenderer:
         """Test comprehensive statistics calculation."""
         stats = renderer._calculate_comprehensive_stats(nested_folder_tree)
 
-        assert stats["total_folders"] == 5  # Root + Development + Reading + Web Dev + Version Control
+        assert (
+            stats["total_folders"] == 5
+        )  # Root + Development + Reading + Web Dev + Version Control
         assert stats["total_bookmarks"] == 3
         assert stats["max_depth"] == 2  # Nested folders go 2 levels deep
         assert "avg_bookmarks" in stats
@@ -297,7 +319,7 @@ class TestTreeRenderer:
             show_descriptions=True,
             show_urls=True,
             show_summary=True,
-            max_url_length=30
+            max_url_length=30,
         )
 
         # Check that output was written to console
@@ -326,10 +348,20 @@ class TestTreeRenderer:
             name="Root",
             children=[
                 FolderNode(name="Z Folder", children=[]),
-                LLMMetadata(url="https://z.com", name="Z Bookmark", description="", tokens_used=10),
+                LLMMetadata(
+                    url="https://z.com",
+                    name="Z Bookmark",
+                    description="",
+                    tokens_used=10,
+                ),
                 FolderNode(name="A Folder", children=[]),
-                LLMMetadata(url="https://a.com", name="A Bookmark", description="", tokens_used=10),
-            ]
+                LLMMetadata(
+                    url="https://a.com",
+                    name="A Bookmark",
+                    description="",
+                    tokens_used=10,
+                ),
+            ],
         )
 
         tree = renderer.render_tree(unsorted_tree)
@@ -354,7 +386,7 @@ class TestConvenienceFunctions:
             show_descriptions=True,
             show_urls=True,
             show_summary=True,
-            max_url_length=50
+            max_url_length=50,
         )
 
         # Check that output was written
@@ -364,7 +396,7 @@ class TestConvenienceFunctions:
     def test_render_bookmark_tree_default_console(self, simple_folder_tree):
         """Test convenience function with default console."""
         # Should not raise any exceptions
-        with patch('ombm.renderer.TreeRenderer') as mock_renderer_class:
+        with patch("ombm.renderer.TreeRenderer") as mock_renderer_class:
             mock_renderer = MagicMock()
             mock_renderer_class.return_value = mock_renderer
 
@@ -385,7 +417,7 @@ class TestConvenienceFunctions:
             simple_folder_tree,
             show_descriptions=False,
             show_urls=True,
-            max_url_length=20
+            max_url_length=20,
         )
 
         assert isinstance(tree, Tree)
@@ -414,9 +446,9 @@ class TestEdgeCases:
                     url=long_url,
                     name="Long URL Test",
                     description="Test with very long URL",
-                    tokens_used=10
+                    tokens_used=10,
                 )
-            ]
+            ],
         )
 
         result = renderer.render_tree(tree, show_urls=True, max_url_length=50)
@@ -434,9 +466,9 @@ class TestEdgeCases:
                     url="https://example.com",
                     name="No Description",
                     description="",  # Empty description
-                    tokens_used=10
+                    tokens_used=10,
                 )
-            ]
+            ],
         )
 
         result = renderer.render_tree(tree, show_descriptions=True)
@@ -457,11 +489,11 @@ class TestEdgeCases:
                             url="https://example.com",
                             name="Bøøkmark with spéciäl chârs",
                             description="Déscription with àccents",
-                            tokens_used=10
+                            tokens_used=10,
                         )
-                    ]
+                    ],
                 )
-            ]
+            ],
         )
 
         result = renderer.render_tree(tree)
@@ -473,9 +505,17 @@ class TestEdgeCases:
         renderer = TreeRenderer(console=console)
 
         # Create a 5-level deep structure
-        current = FolderNode(name="Level 5", children=[
-            LLMMetadata(url="https://example.com", name="Deep Bookmark", description="", tokens_used=10)
-        ])
+        current = FolderNode(
+            name="Level 5",
+            children=[
+                LLMMetadata(
+                    url="https://example.com",
+                    name="Deep Bookmark",
+                    description="",
+                    tokens_used=10,
+                )
+            ],
+        )
 
         for i in range(4, 0, -1):
             current = FolderNode(name=f"Level {i}", children=[current])

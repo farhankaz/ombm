@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class TreeBuilderError(Exception):
     """Base exception for tree builder-related errors."""
+
     pass
 
 
@@ -32,9 +33,7 @@ class TaxonomyParser:
         self.duplicate_bookmarks: list[str] = []
 
     def parse_taxonomy(
-        self,
-        taxonomy_json: dict,
-        original_metadata: list[LLMMetadata]
+        self, taxonomy_json: dict, original_metadata: list[LLMMetadata]
     ) -> FolderNode:
         """
         Parse taxonomy JSON into a FolderNode tree structure.
@@ -75,10 +74,7 @@ class TaxonomyParser:
                 folder_children.append(folder_node)
 
             # Create root node
-            root = FolderNode(
-                name="Bookmarks",
-                children=folder_children
-            )
+            root = FolderNode(name="Bookmarks", children=folder_children)
 
             # Validate that all bookmarks were processed
             self._validate_completeness(original_metadata)
@@ -108,9 +104,7 @@ class TaxonomyParser:
             raise TreeBuilderError(f"Taxonomy parsing failed: {e}") from e
 
     def _parse_folder(
-        self,
-        folder_data: dict,
-        url_to_metadata: dict[str, LLMMetadata]
+        self, folder_data: dict, url_to_metadata: dict[str, LLMMetadata]
     ) -> FolderNode:
         """
         Parse a single folder from the JSON data.
@@ -163,9 +157,7 @@ class TaxonomyParser:
         return FolderNode(name=folder_name, children=children)
 
     def _parse_bookmark(
-        self,
-        bookmark_data: dict,
-        url_to_metadata: dict[str, LLMMetadata]
+        self, bookmark_data: dict, url_to_metadata: dict[str, LLMMetadata]
     ) -> LLMMetadata | None:
         """
         Parse a single bookmark from the JSON data.
@@ -266,8 +258,7 @@ class TaxonomyParser:
 
 
 def parse_taxonomy_to_tree(
-    taxonomy_json: dict,
-    original_metadata: list[LLMMetadata]
+    taxonomy_json: dict, original_metadata: list[LLMMetadata]
 ) -> FolderNode:
     """
     Convenience function to parse taxonomy JSON into a FolderNode tree.

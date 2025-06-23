@@ -268,7 +268,9 @@ class LLMService:
                 return taxonomy_data
 
             except openai.RateLimitError as e:
-                logger.warning(f"Rate limit hit for taxonomy, attempt {attempt + 1}: {e}")
+                logger.warning(
+                    f"Rate limit hit for taxonomy, attempt {attempt + 1}: {e}"
+                )
                 if attempt < self.max_retries - 1:
                     # Exponential backoff with jitter
                     delay = (2**attempt) + (attempt * 0.1)
