@@ -145,7 +145,7 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 | T‑31 | AppleScript generator templates       | P2  | Cline | 🟢     | Completed: .applescript.j2 templates for create, move, and export operations |
 | T‑32 | Persistence manager module            | P1  | Cline | 🟢     | Completed: PersistenceManager executes AppleScript, integrated with CLI `--save` flag |
 | T‑33 | Undo snapshot backup                  | P2  | Cline | 🟢     | Completed: Creates timestamped backup of Bookmarks.plist before saving changes |
-| T‑41 | Verbose & quiet modes                 | P2  |       | ⚪️     |       |
+| T‑41 | Verbose & quiet modes                 | P2  | Cline | 🟢     | Completed: --verbose/--quiet flags, logging levels, console output control, comprehensive tests |
 | T‑42 | Progress bars                         | P3  |       | ⚪️     |       |
 | T‑43 | Keychain integration                  | P2  |       | ⚪️     |       |
 | T‑44 | Homebrew bottle build                 | P1  |       | ⚪️     |       |

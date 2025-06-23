@@ -7,15 +7,23 @@ from typing import Any, cast
 import structlog
 
 
-def configure_logging(verbose: bool = False, json_output: bool = False) -> None:
+def configure_logging(
+    verbose: bool = False, quiet: bool = False, json_output: bool = False
+) -> None:
     """Configure structured logging for OMBM.
 
     Args:
         verbose: Enable verbose logging (DEBUG level)
+        quiet: Enable quiet mode (WARNING level or higher)
         json_output: Output logs as JSON lines
     """
-    # Set log level based on verbosity
-    log_level = logging.DEBUG if verbose else logging.INFO
+    # Set log level based on verbosity (quiet takes precedence over verbose)
+    if quiet:
+        log_level = logging.WARNING
+    elif verbose:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
 
     # Clear any existing handlers
     root_logger = logging.getLogger()

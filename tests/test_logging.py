@@ -41,6 +41,20 @@ class TestLoggingConfiguration:
         # Check that logging level is set to INFO
         assert logging.getLogger().level == logging.INFO
 
+    def test_configure_logging_quiet_mode(self) -> None:
+        """Test quiet logging configuration."""
+        configure_logging(verbose=False, quiet=True, json_output=False)
+
+        # Check that logging level is set to WARNING
+        assert logging.getLogger().level == logging.WARNING
+
+    def test_configure_logging_quiet_takes_precedence(self) -> None:
+        """Test that quiet mode takes precedence over verbose mode."""
+        configure_logging(verbose=True, quiet=True, json_output=False)
+
+        # Check that logging level is set to WARNING (quiet takes precedence)
+        assert logging.getLogger().level == logging.WARNING
+
     def test_configure_logging_json_output(self) -> None:
         """Test JSON output configuration."""
         configure_logging(verbose=False, json_output=True)

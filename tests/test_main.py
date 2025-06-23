@@ -1,6 +1,6 @@
 """Tests for the main CLI entrypoint."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -76,3 +76,85 @@ class TestMainCLI:
         mock_pipeline.assert_called_once()
         call_args = mock_pipeline.call_args[1]
         assert call_args["save"]
+
+    def test_verbose_mode_logging(self, mock_pipeline: AsyncMock) -> None:
+        """Test that verbose mode affects logging configuration."""
+        with patch("ombm.__main__.configure_logging") as mock_config:
+            result = self.runner.invoke(app, ["organize", "--verbose"])
+            assert result.exit_code == 0
+            mock_config.assert_called_once_with(
+                verbose=True, quiet=False, json_output=False
+            )
+
+    def test_quiet_mode_logging(self, mock_pipeline: AsyncMock) -> None:
+        """Test that quiet mode affects logging configuration."""
+        with patch("ombm.__main__.configure_logging") as mock_config:
+            result = self.runner.invoke(app, ["organize", "--quiet"])
+            assert result.exit_code == 0
+            mock_config.assert_called_once_with(
+                verbose=False, quiet=True, json_output=False
+            )
+
+    def test_verbose_and_quiet_conflict(self, mock_pipeline: AsyncMock) -> None:
+        """Test that verbose and quiet flags cannot be used together."""
+        result = self.runner.invoke(app, ["organize", "--verbose", "--quiet"])
+        assert result.exit_code == 1
+        assert "--verbose and --quiet cannot be used together" in result.stdout
+        mock_pipeline.assert_not_called()
+
+    def test_quiet_mode_console_output(self, mock_pipeline: AsyncMock) -> None:
+        """Test that quiet mode suppresses most console output."""
+        result = self.runner.invoke(app, ["organize", "--quiet"])
+        assert result.exit_code == 0
+
+        # Should not contain normal startup messages
+        assert "🔖 OMBM - Organize My Bookmarks" not in result.stdout
+        assert "Version:" not in result.stdout
+        assert "Max bookmarks:" not in result.stdout
+        assert "Concurrency:" not in result.stdout
+        assert "Model:" not in result.stdout
+        assert "🔍 Running in dry-run mode" not in result.stdout
+
+        # Should contain quiet mode indicator
+        assert "🔇 Quiet mode enabled" in result.stdout
+
+    def test_verbose_mode_console_output(self, mock_pipeline: AsyncMock) -> None:
+        """Test that verbose mode shows additional output."""
+        result = self.runner.invoke(app, ["organize", "--verbose"])
+        assert result.exit_code == 0
+
+        # Should contain normal startup messages
+        assert "🔖 OMBM - Organize My Bookmarks" in result.stdout
+        assert "🔍 Verbose logging enabled" in result.stdout
+
+    def test_normal_mode_console_output(self, mock_pipeline: AsyncMock) -> None:
+        """Test that normal mode shows standard output."""
+        result = self.runner.invoke(app, ["organize"])
+        assert result.exit_code == 0
+
+        # Should contain normal startup messages
+        assert "🔖 OMBM - Organize My Bookmarks" in result.stdout
+        assert "Version:" in result.stdout
+        assert "🔍 Running in dry-run mode" in result.stdout
+
+        # Should not contain verbose or quiet indicators
+        assert "🔍 Verbose logging enabled" not in result.stdout
+        assert "🔇 Quiet mode enabled" not in result.stdout
+
+    def test_json_logs_with_verbose(self, mock_pipeline: AsyncMock) -> None:
+        """Test verbose mode with JSON logs."""
+        with patch("ombm.__main__.configure_logging") as mock_config:
+            result = self.runner.invoke(app, ["organize", "--verbose", "--json-logs"])
+            assert result.exit_code == 0
+            mock_config.assert_called_once_with(
+                verbose=True, quiet=False, json_output=True
+            )
+
+    def test_json_logs_with_quiet(self, mock_pipeline: AsyncMock) -> None:
+        """Test quiet mode with JSON logs."""
+        with patch("ombm.__main__.configure_logging") as mock_config:
+            result = self.runner.invoke(app, ["organize", "--quiet", "--json-logs"])
+            assert result.exit_code == 0
+            mock_config.assert_called_once_with(
+                verbose=False, quiet=True, json_output=True
+            )

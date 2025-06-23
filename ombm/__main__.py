@@ -82,6 +82,13 @@ def organize(
             help="Enable verbose logging",
         ),
     ] = False,
+    quiet: Annotated[
+        bool,
+        typer.Option(
+            "--quiet",
+            help="Enable quiet mode (only warnings and errors)",
+        ),
+    ] = False,
     no_scrape: Annotated[
         bool,
         typer.Option(
@@ -112,8 +119,13 @@ def organize(
     ] = False,
 ) -> None:
     """Organize Safari bookmarks into semantic folders."""
+    # Validate conflicting options
+    if verbose and quiet:
+        console.print("[red]Error: --verbose and --quiet cannot be used together[/red]")
+        raise typer.Exit(code=1)
+
     # Configure logging first
-    configure_logging(verbose=verbose, json_output=json_logs)
+    configure_logging(verbose=verbose, quiet=quiet, json_output=json_logs)
     logger = get_logger(__name__)
 
     # Log startup
@@ -127,38 +139,52 @@ def organize(
         no_scrape=no_scrape,
         json_output=json_out,
         profile_enabled=profile,
+        verbose_mode=verbose,
+        quiet_mode=quiet,
     )
 
-    console.print("🔖 OMBM - Organize My Bookmarks")
-    console.print(f"Version: {__version__}")
+    # Only show startup info if not in quiet mode
+    if not quiet:
+        console.print("🔖 OMBM - Organize My Bookmarks")
+        console.print(f"Version: {__version__}")
 
     if save:
-        console.print("⚠️  Save mode enabled - changes will be written to Safari")
+        if not quiet:
+            console.print("⚠️  Save mode enabled - changes will be written to Safari")
         logger.warning("Save mode enabled - changes will be written to Safari")
     else:
-        console.print("🔍 Running in dry-run mode (no changes will be made)")
+        if not quiet:
+            console.print("🔍 Running in dry-run mode (no changes will be made)")
         logger.info("Running in dry-run mode")
 
-    console.print(
-        f"Max bookmarks: {max_bookmarks if max_bookmarks > 0 else 'unlimited'}"
-    )
-    console.print(f"Concurrency: {concurrency}")
-    console.print(f"Model: {model}")
+    if not quiet:
+        console.print(
+            f"Max bookmarks: {max_bookmarks if max_bookmarks > 0 else 'unlimited'}"
+        )
+        console.print(f"Concurrency: {concurrency}")
+        console.print(f"Model: {model}")
 
-    if verbose:
+    if verbose and not quiet:
         console.print("🔍 Verbose logging enabled")
         logger.debug("Verbose logging enabled")
 
+    if quiet and not verbose:
+        console.print("🔇 Quiet mode enabled")
+        logger.debug("Quiet mode enabled")
+
     if no_scrape:
-        console.print("📚 Using cache-only mode")
+        if not quiet:
+            console.print("📚 Using cache-only mode")
         logger.info("Cache-only mode enabled")
 
     if json_out:
-        console.print(f"📄 JSON output will be written to: {json_out}")
+        if not quiet:
+            console.print(f"📄 JSON output will be written to: {json_out}")
         logger.info("JSON output configured", output_file=json_out)
 
     if profile:
-        console.print("📊 Performance profiling enabled")
+        if not quiet:
+            console.print("📊 Performance profiling enabled")
         logger.info("Performance profiling enabled")
 
     try:
@@ -169,6 +195,7 @@ def organize(
                 save=save,
                 json_out=json_out,
                 force_refresh=not no_scrape,
+                quiet=quiet,
             )
         )
     except Exception as e:
@@ -183,6 +210,7 @@ async def run_organization_pipeline(
     save: bool,
     json_out: str,
     force_refresh: bool,
+    quiet: bool = False,
 ) -> None:
     """The main async pipeline for organizing bookmarks."""
     console = Console()
@@ -193,7 +221,8 @@ async def run_organization_pipeline(
         persistence_manager=persistence_manager
     ) as controller:
         # Step 1: Aggregate metadata
-        console.print("\n[bold]Step 1: Processing bookmarks...[/bold]")
+        if not quiet:
+            console.print("\n[bold]Step 1: Processing bookmarks...[/bold]")
         metadata_list = await controller.aggregate_metadata_collection(
             max_bookmarks=max_bookmarks if max_bookmarks > 0 else None,
             concurrency=concurrency,
@@ -205,30 +234,35 @@ async def run_organization_pipeline(
             return
 
         # Step 2: Generate Taxonomy
-        console.print("[bold]Step 2: Generating taxonomy...[/bold]")
+        if not quiet:
+            console.print("[bold]Step 2: Generating taxonomy...[/bold]")
         if controller.processor and controller.processor._llm_service:
             taxonomy_json = await controller.processor._llm_service.propose_taxonomy(
                 metadata_list
             )
             # Step 3: Parse taxonomy into a tree structure
-            console.print("[bold]Step 3: Building folder tree...[/bold]")
+            if not quiet:
+                console.print("[bold]Step 3: Building folder tree...[/bold]")
             parser = TaxonomyParser()
             taxonomy_tree = parser.parse_taxonomy(taxonomy_json, metadata_list)
 
             # Step 4: Render the output tree
-            console.print("\n[bold green]Proposed Organization:[/bold green]")
+            if not quiet:
+                console.print("\n[bold green]Proposed Organization:[/bold green]")
             renderer = TreeRenderer()
             renderer.render_tree(taxonomy_tree)
 
             # Step 5: Save to Safari if requested
             if save:
-                console.print("\n[bold]Step 4: Saving changes to Safari...[/bold]")
+                if not quiet:
+                    console.print("\n[bold]Step 4: Saving changes to Safari...[/bold]")
                 await controller.apply_taxonomy(taxonomy_tree)
                 console.print("[green]Changes saved successfully![/green]")
 
             # Step 6: Export to JSON if requested
             if json_out:
-                console.print(f"\n[bold]Exporting tree to {json_out}...[/bold]")
+                if not quiet:
+                    console.print(f"\n[bold]Exporting tree to {json_out}...[/bold]")
                 controller.export_folder_tree_to_json(taxonomy_tree, json_out)
                 console.print(f"[green]Successfully exported to {json_out}[/green]")
         else:
