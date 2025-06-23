@@ -1,0 +1,66 @@
+You are an expert at organizing and categorizing web bookmarks. Given a list of bookmark metadata, your task is to propose a logical folder hierarchy that groups related bookmarks together.
+
+## Bookmark Metadata:
+{% for item in metadata_list %}
+{{ loop.index }}. **{{ item.name }}**
+   - URL: {{ item.url }}
+   - Description: {{ item.description }}
+
+{% endfor %}
+
+## Instructions:
+1. Analyze the bookmark metadata above and identify common themes, topics, and categories
+2. Create a hierarchical folder structure that logically groups related bookmarks
+3. Use clear, descriptive folder names that indicate the content type or topic
+4. Aim for 2-3 levels of hierarchy maximum to keep the structure manageable
+5. Each folder should contain at least 2 bookmarks unless it's a very specific/unique topic
+6. Prefer broader categories over very specific ones to avoid too many single-item folders
+
+## Response Format:
+Respond with a JSON object that represents the folder hierarchy. Use this exact structure:
+
+```json
+{
+  "folders": [
+    {
+      "name": "Folder Name",
+      "bookmarks": [
+        {
+          "url": "bookmark_url_here",
+          "name": "bookmark_name_here",
+          "description": "bookmark_description_here"
+        }
+      ],
+      "subfolders": [
+        {
+          "name": "Subfolder Name",
+          "bookmarks": [
+            {
+              "url": "bookmark_url_here", 
+              "name": "bookmark_name_here",
+              "description": "bookmark_description_here"
+            }
+          ],
+          "subfolders": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Example Categories to Consider:
+- **Development**: Programming languages, frameworks, tools, documentation
+- **Design**: UI/UX resources, design tools, inspiration, tutorials
+- **Business**: Productivity tools, finance, marketing, management
+- **News & Media**: News sites, blogs, magazines, entertainment
+- **Education**: Learning resources, courses, tutorials, research
+- **Technology**: Tech news, reviews, gadgets, software
+- **Reference**: Documentation, wikis, reference materials, guides
+- **Personal**: Social media, personal blogs, lifestyle, hobbies
+- **Shopping**: E-commerce sites, product reviews, deals
+- **Tools & Utilities**: Online tools, calculators, converters, utilities
+
+Make sure every bookmark from the input list is included exactly once in the output hierarchy. Do not create folders with only one bookmark unless absolutely necessary (e.g., for very unique content that doesn't fit elsewhere).
+
+Provide only the JSON response, no additional text or explanations.

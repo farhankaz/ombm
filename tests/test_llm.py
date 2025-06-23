@@ -46,7 +46,7 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_successful_title_desc_generation(
         self, llm_service, mock_openai_response, sample_content
-    ):
+    ) -> None:
         """Test successful title and description generation."""
         with patch.object(
             llm_service.client.chat.completions, "create", new_callable=AsyncMock
@@ -78,7 +78,7 @@ class TestLLMService:
             assert call_args[1]["response_format"] == {"type": "json_object"}
 
     @pytest.mark.asyncio
-    async def test_content_truncation(self, llm_service, mock_openai_response):
+    async def test_content_truncation(self, llm_service, mock_openai_response) -> None:
         """Test that long content is properly truncated."""
         # Create content longer than 8000 chars
         long_content = "A" * 10000
@@ -99,7 +99,7 @@ class TestLLMService:
             assert "..." in prompt
 
     @pytest.mark.asyncio
-    async def test_field_length_enforcement(self, llm_service, sample_content):
+    async def test_field_length_enforcement(self, llm_service, sample_content) -> None:
         """Test that title and description are truncated to max length."""
         # Create response with very long fields
         long_response = MagicMock()
@@ -128,7 +128,7 @@ class TestLLMService:
             assert result.description == "B" * 200
 
     @pytest.mark.asyncio
-    async def test_invalid_json_response(self, llm_service, sample_content):
+    async def test_invalid_json_response(self, llm_service, sample_content) -> None:
         """Test handling of invalid JSON response."""
         bad_response = MagicMock()
         bad_response.choices = [MagicMock()]
@@ -146,7 +146,7 @@ class TestLLMService:
                 )
 
     @pytest.mark.asyncio
-    async def test_missing_required_fields(self, llm_service, sample_content):
+    async def test_missing_required_fields(self, llm_service, sample_content) -> None:
         """Test handling of response missing required fields."""
         incomplete_response = MagicMock()
         incomplete_response.choices = [MagicMock()]
@@ -169,7 +169,7 @@ class TestLLMService:
                 )
 
     @pytest.mark.asyncio
-    async def test_empty_response(self, llm_service, sample_content):
+    async def test_empty_response(self, llm_service, sample_content) -> None:
         """Test handling of empty response."""
         empty_response = MagicMock()
         empty_response.choices = [MagicMock()]
@@ -188,7 +188,7 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_rate_limit_retry(
         self, llm_service, mock_openai_response, sample_content
-    ):
+    ) -> None:
         """Test retry logic for rate limiting."""
         with patch.object(
             llm_service.client.chat.completions, "create", new_callable=AsyncMock
@@ -214,7 +214,9 @@ class TestLLMService:
             assert mock_create.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_rate_limit_max_retries_exceeded(self, llm_service, sample_content):
+    async def test_rate_limit_max_retries_exceeded(
+        self, llm_service, sample_content
+    ) -> None:
         """Test that rate limit retries eventually fail."""
         with patch.object(
             llm_service.client.chat.completions, "create", new_callable=AsyncMock
@@ -238,7 +240,7 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_timeout_retry(
         self, llm_service, mock_openai_response, sample_content
-    ):
+    ) -> None:
         """Test retry logic for timeouts."""
         with patch.object(
             llm_service.client.chat.completions, "create", new_callable=AsyncMock
@@ -257,7 +259,7 @@ class TestLLMService:
             assert mock_create.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_api_error_no_retry(self, llm_service, sample_content):
+    async def test_api_error_no_retry(self, llm_service, sample_content) -> None:
         """Test that API errors don't trigger retries."""
         with patch.object(
             llm_service.client.chat.completions, "create", new_callable=AsyncMock
@@ -278,7 +280,7 @@ class TestLLMService:
     @pytest.mark.asyncio
     async def test_title_desc_from_scrape_result(
         self, llm_service, mock_openai_response
-    ):
+    ) -> None:
         """Test convenience method for generating metadata from ScrapeResult."""
         scrape_result = ScrapeResult(
             url="https://example.com/article",
@@ -304,7 +306,7 @@ class TestLLMService:
             assert scrape_result.html_title in prompt
 
     @pytest.mark.asyncio
-    async def test_template_rendering(self, llm_service, sample_content):
+    async def test_template_rendering(self, llm_service, sample_content) -> None:
         """Test that Jinja template is properly rendered."""
         with patch.object(
             llm_service.client.chat.completions, "create", new_callable=AsyncMock
@@ -336,7 +338,7 @@ class TestConvenienceFunction:
     @pytest.mark.asyncio
     async def test_generate_title_desc_function(
         self, mock_openai_response, sample_content
-    ):
+    ) -> None:
         """Test the convenience generate_title_desc function."""
         with patch("ombm.llm.LLMService") as mock_service_class:
             mock_service = MagicMock()

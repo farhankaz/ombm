@@ -12,7 +12,7 @@ class TestBookmarkAdapter:
     """Test cases for BookmarkAdapter."""
 
     @pytest.mark.asyncio
-    async def test_get_bookmarks_returns_records(self):
+    async def test_get_bookmarks_returns_records(self) -> None:
         """Test that get_bookmarks returns at least one BookmarkRecord."""
         adapter = BookmarkAdapter()
         bookmarks = await adapter.get_bookmarks()
@@ -32,7 +32,7 @@ class TestBookmarkAdapter:
             assert bookmark.url.startswith("http")
 
     @pytest.mark.asyncio
-    async def test_get_bookmarks_with_max_count(self):
+    async def test_get_bookmarks_with_max_count(self) -> None:
         """Test that max_count parameter limits the number of returned bookmarks."""
         adapter = BookmarkAdapter()
 
@@ -51,7 +51,7 @@ class TestBookmarkAdapter:
         assert len(bookmarks_large) == total_count
 
     @pytest.mark.asyncio
-    async def test_get_bookmarks_without_max_count(self):
+    async def test_get_bookmarks_without_max_count(self) -> None:
         """Test that get_bookmarks without max_count returns all mock bookmarks."""
         adapter = BookmarkAdapter()
         bookmarks = await adapter.get_bookmarks()
@@ -64,7 +64,7 @@ class TestBookmarkAdapter:
         assert len(uuids) == len(set(uuids)), "All bookmark UUIDs should be unique"
 
     @pytest.mark.asyncio
-    async def test_bookmark_record_fields(self):
+    async def test_bookmark_record_fields(self) -> None:
         """Test that BookmarkRecord fields are properly populated."""
         adapter = BookmarkAdapter()
         bookmarks = await adapter.get_bookmarks(max_count=1)
