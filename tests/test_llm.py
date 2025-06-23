@@ -412,7 +412,7 @@ class TestLLMServiceInitialization:
         with patch("ombm.keychain.get_api_key_with_fallback") as mock_fallback:
             mock_fallback.return_value = "sk-keychain123"
 
-                        # Initialize without explicit API key - should use keychain
+            # Initialize without explicit API key - should use keychain
             LLMService()
 
             # Verify that the fallback was called

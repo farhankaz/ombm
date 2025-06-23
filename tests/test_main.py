@@ -342,9 +342,7 @@ class TestKeychainCommands:
 
             assert result.exit_code == 0
             assert "No OpenAI API key found in keychain" in result.stdout
-            assert (
-                "No API key found. Use 'ombm set-key' to store one" in result.stdout
-            )
+            assert "No API key found. Use 'ombm set-key' to store one" in result.stdout
 
     def test_key_status_command_error(self) -> None:
         """Test key status error."""
