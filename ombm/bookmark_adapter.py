@@ -9,7 +9,7 @@ from .models import BookmarkRecord
 class BookmarkAdapter:
     """Adapter for retrieving Safari bookmarks on macOS."""
 
-    async def get_bookmarks(self, max_count: int = None) -> list[BookmarkRecord]:
+    async def get_bookmarks(self, max_count: int | None = None) -> list[BookmarkRecord]:
         """
         Retrieve Safari bookmarks from macOS.
 
@@ -28,49 +28,49 @@ class BookmarkAdapter:
                 uuid=str(uuid_module.uuid4()),
                 title="GitHub - Python",
                 url="https://github.com/python/cpython",
-                created_at=datetime.now() - timedelta(days=30)
+                created_at=datetime.now() - timedelta(days=30),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="OpenAI API Documentation",
                 url="https://platform.openai.com/docs/api-reference",
-                created_at=datetime.now() - timedelta(days=15)
+                created_at=datetime.now() - timedelta(days=15),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="Playwright for Python",
                 url="https://playwright.dev/python/",
-                created_at=datetime.now() - timedelta(days=7)
+                created_at=datetime.now() - timedelta(days=7),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="Typer Documentation",
                 url="https://typer.tiangolo.com/",
-                created_at=datetime.now() - timedelta(days=5)
+                created_at=datetime.now() - timedelta(days=5),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="Rich Library",
                 url="https://rich.readthedocs.io/en/stable/",
-                created_at=datetime.now() - timedelta(days=3)
+                created_at=datetime.now() - timedelta(days=3),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="Python asyncio Documentation",
                 url="https://docs.python.org/3/library/asyncio.html",
-                created_at=datetime.now() - timedelta(days=2)
+                created_at=datetime.now() - timedelta(days=2),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="SQLite Tutorial",
                 url="https://www.sqlitetutorial.net/",
-                created_at=datetime.now() - timedelta(days=1)
+                created_at=datetime.now() - timedelta(days=1),
             ),
             BookmarkRecord(
                 uuid=str(uuid_module.uuid4()),
                 title="Homebrew Formula Cookbook",
                 url="https://docs.brew.sh/Formula-Cookbook",
-                created_at=datetime.now() - timedelta(hours=12)
+                created_at=datetime.now() - timedelta(hours=12),
             ),
         ]
 

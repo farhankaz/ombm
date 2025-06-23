@@ -29,7 +29,7 @@ class TestBookmarkAdapter:
             assert isinstance(bookmark.created_at, datetime)
             assert len(bookmark.uuid) > 0
             assert len(bookmark.title) > 0
-            assert bookmark.url.startswith('http')
+            assert bookmark.url.startswith("http")
 
     @pytest.mark.asyncio
     async def test_get_bookmarks_with_max_count(self):
@@ -73,13 +73,14 @@ class TestBookmarkAdapter:
 
         # Test UUID format (should be valid UUID string)
         import uuid
+
         try:
             uuid.UUID(bookmark.uuid)
         except ValueError:
             pytest.fail("UUID should be a valid UUID string")
 
         # Test URL format
-        assert bookmark.url.startswith(('http://', 'https://'))
+        assert bookmark.url.startswith(("http://", "https://"))
 
         # Test datetime
         assert bookmark.created_at <= datetime.now()

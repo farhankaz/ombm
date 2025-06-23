@@ -1,0 +1,63 @@
+You are an expert content analyst helping to organize bookmarks. Your task is to analyze web page content and generate a semantic title and description that will help users find and understand the bookmark later.
+
+Given the following web page content:
+
+**URL:** {{ url }}
+**Original Title:** {{ original_title }}
+**Content:** {{ content }}
+
+Please analyze this content and provide:
+1. A clear, descriptive title that captures the main topic/purpose (max 80 characters)
+2. A concise description that explains what the page contains or what value it provides (max 200 characters)
+
+**Requirements:**
+- Title should be more descriptive than the original if the original is vague, generic, or unclear
+- Description should highlight the key value proposition or main content type
+- Use simple, searchable language that a user would remember
+- Avoid marketing jargon or overly technical terms unless necessary
+- If the content is unclear or seems to be an error page, indicate this
+
+**Response Format:**
+Return your response as a JSON object with exactly these fields:
+```json
+{
+  "name": "Your semantic title here",
+  "description": "Your concise description here"
+}
+```
+
+**Examples:**
+
+For a tutorial page:
+```json
+{
+  "name": "Python AsyncIO Tutorial - Beginner's Guide",
+  "description": "Step-by-step tutorial covering async/await, coroutines, and event loops in Python with practical examples"
+}
+```
+
+For a tool/service page:
+```json
+{
+  "name": "Figma - Collaborative Design Tool",
+  "description": "Web-based interface design tool for creating prototypes, wireframes, and collaborative design workflows"
+}
+```
+
+For a blog post:
+```json
+{
+  "name": "Remote Work Best Practices - 2024 Guide",
+  "description": "Comprehensive guide covering productivity tips, communication strategies, and tools for effective remote work"
+}
+```
+
+For unclear/error content:
+```json
+{
+  "name": "Error or Inaccessible Page",
+  "description": "Page could not be accessed or contains error content"
+}
+```
+
+Now analyze the provided content and generate the JSON response:

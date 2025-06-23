@@ -44,11 +44,14 @@ class TestMainCLI:
             app,
             [
                 "organize",
-                "--max", "100",
-                "--concurrency", "8",
+                "--max",
+                "100",
+                "--concurrency",
+                "8",
                 "--verbose",
-                "--model", "gpt-3.5-turbo",
-            ]
+                "--model",
+                "gpt-3.5-turbo",
+            ],
         )
         assert result.exit_code == 0
         assert "Max bookmarks: 100" in result.stdout

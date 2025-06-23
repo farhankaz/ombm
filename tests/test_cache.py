@@ -29,7 +29,7 @@ def sample_scrape_result():
     return ScrapeResult(
         url="https://example.com",
         text="This is sample text content from the webpage.",
-        html_title="Sample Page Title"
+        html_title="Sample Page Title",
     )
 
 
@@ -40,7 +40,7 @@ def sample_llm_metadata():
         url="https://example.com",
         name="Example Website",
         description="A sample website for testing purposes.",
-        tokens_used=50
+        tokens_used=50,
     )
 
 
@@ -91,14 +91,19 @@ class TestCacheManager:
         await cache_manager.initialize()  # Should not raise error
 
         # Verify tables still exist
-        async with aiosqlite.connect(cache_manager.db_path) as db, db.execute(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='table'"
-        ) as cursor:
+        async with (
+            aiosqlite.connect(cache_manager.db_path) as db,
+            db.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table'"
+            ) as cursor,
+        ):
             table_count = (await cursor.fetchone())[0]
             assert table_count == 2  # scrape_results and llm_metadata
 
     @pytest.mark.asyncio
-    async def test_store_and_retrieve_scrape_result(self, cache_manager, sample_scrape_result):
+    async def test_store_and_retrieve_scrape_result(
+        self, cache_manager, sample_scrape_result
+    ):
         """Test storing and retrieving scrape results."""
         # Store the result
         await cache_manager.store_scrape_result(sample_scrape_result)
@@ -112,7 +117,9 @@ class TestCacheManager:
         assert retrieved.html_title == sample_scrape_result.html_title
 
     @pytest.mark.asyncio
-    async def test_store_and_retrieve_llm_metadata(self, cache_manager, sample_llm_metadata):
+    async def test_store_and_retrieve_llm_metadata(
+        self, cache_manager, sample_llm_metadata
+    ):
         """Test storing and retrieving LLM metadata."""
         # Store the metadata
         await cache_manager.store_llm_metadata(sample_llm_metadata)
@@ -153,7 +160,9 @@ class TestCacheManager:
         url = "https://example.com"
 
         # Store initial result
-        result1 = ScrapeResult(url=url, text="Original text", html_title="Original title")
+        result1 = ScrapeResult(
+            url=url, text="Original text", html_title="Original title"
+        )
         await cache_manager.store_scrape_result(result1)
 
         # Store updated result
@@ -166,7 +175,9 @@ class TestCacheManager:
         assert retrieved.html_title == "Updated title"
 
     @pytest.mark.asyncio
-    async def test_clear_cache(self, cache_manager, sample_scrape_result, sample_llm_metadata):
+    async def test_clear_cache(
+        self, cache_manager, sample_scrape_result, sample_llm_metadata
+    ):
         """Test clearing all cached data."""
         # Store some data
         await cache_manager.store_scrape_result(sample_scrape_result)
@@ -198,9 +209,7 @@ class TestCacheManager:
 
         # Add some data
         scrape_result = ScrapeResult(
-            url="https://example1.com",
-            text="Test text",
-            html_title="Test title"
+            url="https://example1.com", text="Test text", html_title="Test title"
         )
         await cache_manager.store_scrape_result(scrape_result)
 
@@ -208,13 +217,13 @@ class TestCacheManager:
             url="https://example1.com",
             name="Example 1",
             description="First example",
-            tokens_used=100
+            tokens_used=100,
         )
         llm_metadata2 = LLMMetadata(
             url="https://example2.com",
             name="Example 2",
             description="Second example",
-            tokens_used=150
+            tokens_used=150,
         )
         await cache_manager.store_llm_metadata(llm_metadata1)
         await cache_manager.store_llm_metadata(llm_metadata2)

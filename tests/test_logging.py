@@ -54,9 +54,9 @@ class TestLoggingConfiguration:
         logger = get_logger("test_logger")
 
         # Logger should be a structlog logger (may be wrapped in proxy)
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'error')
-        assert hasattr(logger, 'debug')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "error")
+        assert hasattr(logger, "debug")
 
     @patch("sys.stderr", new_callable=StringIO)
     def test_json_log_output(self, mock_stderr: StringIO) -> None:
@@ -108,10 +108,7 @@ class TestLoggingHelpers:
         logger = get_logger("test")
 
         bound_logger = log_execution_context(
-            logger,
-            "test_operation",
-            user_id="123",
-            session_id="abc"
+            logger, "test_operation", user_id="123", session_id="abc"
         )
 
         # Verify logger is bound with context
@@ -128,7 +125,7 @@ class TestLoggingHelpers:
             url="https://example.com",
             title="Example Site",
             stage="scrape",
-            duration=1.5
+            duration=1.5,
         )
 
     def test_log_performance_metrics(self) -> None:
@@ -142,7 +139,7 @@ class TestLoggingHelpers:
             operation="scrape_bookmarks",
             duration=10.5,
             items_processed=25,
-            cache_hits=15
+            cache_hits=15,
         )
 
     def test_log_error_with_context(self) -> None:
@@ -157,7 +154,7 @@ class TestLoggingHelpers:
             logger,
             error=test_error,
             operation="test_operation",
-            url="https://example.com"
+            url="https://example.com",
         )
 
 
@@ -179,7 +176,7 @@ class TestAcceptanceCriteria:
 
         # Get all log output
         log_output = mock_stderr.getvalue()
-        log_lines = [line.strip() for line in log_output.split('\n') if line.strip()]
+        log_lines = [line.strip() for line in log_output.split("\n") if line.strip()]
 
         # Should have multiple log lines
         assert len(log_lines) >= 4
