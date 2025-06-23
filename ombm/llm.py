@@ -48,12 +48,19 @@ class LLMService:
         self.timeout = timeout
         self.max_retries = max_retries
 
-        # Initialize OpenAI client
+        # Initialize OpenAI client with keychain fallback
         if api_key:
             self.client = openai.AsyncOpenAI(api_key=api_key, timeout=timeout)
         else:
-            # Will use OPENAI_API_KEY environment variable
-            self.client = openai.AsyncOpenAI(timeout=timeout)
+            # Try keychain first, then environment variable
+            from .keychain import get_api_key_with_fallback
+
+            fallback_key = get_api_key_with_fallback()
+            if fallback_key:
+                self.client = openai.AsyncOpenAI(api_key=fallback_key, timeout=timeout)
+            else:
+                # Will use OPENAI_API_KEY environment variable as final fallback
+                self.client = openai.AsyncOpenAI(timeout=timeout)
 
         # Initialize Jinja environment for templates
         template_dir = Path(__file__).parent / "prompts"

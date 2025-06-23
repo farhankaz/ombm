@@ -406,3 +406,27 @@ class TestLLMServiceInitialization:
         # Should reuse cached template
         template2 = service._get_title_desc_template()
         assert template is template2
+
+    def test_keychain_integration(self):
+        """Test LLM service integration with keychain fallback."""
+        with patch("ombm.keychain.get_api_key_with_fallback") as mock_fallback:
+            mock_fallback.return_value = "sk-keychain123"
+
+                        # Initialize without explicit API key - should use keychain
+            LLMService()
+
+            # Verify that the fallback was called
+            mock_fallback.assert_called_once()
+
+    def test_keychain_fallback_to_environment(self):
+        """Test LLM service fallback to environment when keychain fails."""
+        with patch("ombm.keychain.get_api_key_with_fallback") as mock_fallback:
+            mock_fallback.return_value = None
+
+            # Should fall back to environment variable behavior
+            LLMService()
+
+            # Verify that the fallback was called
+            mock_fallback.assert_called_once()
+
+            # Client should still be initialized (will use environment variable)

@@ -234,3 +234,127 @@ class TestProgressContext:
             # Should be safe to call
             callback(10, 20)
             callback(20, 20)
+
+
+class TestKeychainCommands:
+    """Test the keychain management CLI commands."""
+
+    def setup_method(self) -> None:
+        """Set up test fixtures."""
+        self.runner = CliRunner()
+
+    def test_set_key_command_success(self) -> None:
+        """Test successful API key storage."""
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.store_openai_key.return_value = None
+
+            result = self.runner.invoke(app, ["set-key"], input="sk-test123456789\n")
+
+            assert result.exit_code == 0
+            assert "OpenAI API key stored successfully" in result.stdout
+            mock_manager.store_openai_key.assert_called_once()
+
+    def test_set_key_command_error(self) -> None:
+        """Test API key storage error."""
+        from ombm.keychain import KeychainError
+
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.store_openai_key.side_effect = KeychainError("Access denied")
+
+            result = self.runner.invoke(app, ["set-key"], input="sk-test123456789\n")
+
+            assert result.exit_code == 1
+            assert "Error storing API key" in result.stdout
+
+    def test_delete_key_command_success(self) -> None:
+        """Test successful API key deletion."""
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.delete_openai_key.return_value = True
+
+            result = self.runner.invoke(app, ["delete-key"])
+
+            assert result.exit_code == 0
+            assert "OpenAI API key deleted from keychain" in result.stdout
+
+    def test_delete_key_command_not_found(self) -> None:
+        """Test API key deletion when no key exists."""
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.delete_openai_key.return_value = False
+
+            result = self.runner.invoke(app, ["delete-key"])
+
+            assert result.exit_code == 0
+            assert "No API key found in keychain to delete" in result.stdout
+
+    def test_delete_key_command_error(self) -> None:
+        """Test API key deletion error."""
+        from ombm.keychain import KeychainError
+
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.delete_openai_key.side_effect = KeychainError("Access denied")
+
+            result = self.runner.invoke(app, ["delete-key"])
+
+            assert result.exit_code == 1
+            assert "Error deleting API key" in result.stdout
+
+    def test_key_status_command_key_exists(self) -> None:
+        """Test key status when key exists in keychain."""
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.has_openai_key.return_value = True
+
+            result = self.runner.invoke(app, ["key-status"])
+
+            assert result.exit_code == 0
+            assert "OpenAI API key is stored in keychain" in result.stdout
+
+    def test_key_status_command_no_key_env_set(self) -> None:
+        """Test key status when no keychain key but environment variable set."""
+        with (
+            patch("ombm.__main__.KeychainManager") as mock_manager_class,
+            patch.dict("os.environ", {"OPENAI_API_KEY": "sk-env123"}),
+        ):
+            mock_manager = mock_manager_class.return_value
+            mock_manager.has_openai_key.return_value = False
+
+            result = self.runner.invoke(app, ["key-status"])
+
+            assert result.exit_code == 0
+            assert "No OpenAI API key found in keychain" in result.stdout
+            assert "OPENAI_API_KEY environment variable is set" in result.stdout
+
+    def test_key_status_command_no_key_anywhere(self) -> None:
+        """Test key status when no key found anywhere."""
+        with (
+            patch("ombm.__main__.KeychainManager") as mock_manager_class,
+            patch.dict("os.environ", {}, clear=True),
+        ):
+            mock_manager = mock_manager_class.return_value
+            mock_manager.has_openai_key.return_value = False
+
+            result = self.runner.invoke(app, ["key-status"])
+
+            assert result.exit_code == 0
+            assert "No OpenAI API key found in keychain" in result.stdout
+            assert (
+                "No API key found. Use 'ombm set-key' to store one" in result.stdout
+            )
+
+    def test_key_status_command_error(self) -> None:
+        """Test key status error."""
+        from ombm.keychain import KeychainError
+
+        with patch("ombm.__main__.KeychainManager") as mock_manager_class:
+            mock_manager = mock_manager_class.return_value
+            mock_manager.has_openai_key.side_effect = KeychainError("Access denied")
+
+            result = self.runner.invoke(app, ["key-status"])
+
+            assert result.exit_code == 1
+            assert "Error checking keychain" in result.stdout

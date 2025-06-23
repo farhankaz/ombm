@@ -147,7 +147,7 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 | T‑33 | Undo snapshot backup                  | P2  | Cline | 🟢     | Completed: Creates timestamped backup of Bookmarks.plist before saving changes |
 | T‑41 | Verbose & quiet modes                 | P2  | Cline | 🟢     | Completed: --verbose/--quiet flags, logging levels, console output control, comprehensive tests |
 | T‑42 | Progress bars                         | P3  | Cline | 🟢     | Completed: Rich progress bars for ≥10 bookmarks, async context manager, integration tests |
-| T‑43 | Keychain integration                  | P2  |       | ⚪️     |       |
+| T‑43 | Keychain integration                  | P2  | Cline | 🟢     | Completed: Secure API key storage with keyring library, CLI commands (set-key/delete-key/key-status), LLM service integration, comprehensive tests |
 | T‑44 | Homebrew bottle build                 | P1  |       | ⚪️     |       |
 | T‑45 | Readme + Quick‑start docs             | P1  |       | ⚪️     |       |
 | T‑51 | E2E pipeline test on macOS‑CI         | P1  |       | ⚪️     |       |

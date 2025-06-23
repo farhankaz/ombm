@@ -1,9 +1,9 @@
 """Main CLI entrypoint for OMBM."""
 
 import asyncio
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
-from typing import Annotated, AsyncGenerator
-from collections.abc import Callable
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -17,6 +17,7 @@ from rich.progress import (
 
 from ombm import __version__
 from ombm.controller import BookmarkController
+from ombm.keychain import KeychainError, KeychainManager
 from ombm.logging import configure_logging, get_logger
 from ombm.persistence import PersistenceManager
 from ombm.renderer import TreeRenderer
@@ -214,7 +215,9 @@ def organize(
 
 
 @asynccontextmanager
-async def progress_context(total: int, show_progress: bool = True) -> AsyncGenerator[Callable[[int, int], None], None]:
+async def progress_context(
+    total: int, show_progress: bool = True
+) -> AsyncGenerator[Callable[[int, int], None], None]:
     """Context manager for progress tracking during bookmark processing."""
     if not show_progress or total < 10:
         # Don't show progress bar for small numbers or when disabled
@@ -318,6 +321,73 @@ async def run_organization_pipeline(
                 console.print(f"[green]Successfully exported to {json_out}[/green]")
         else:
             console.print("[red]Error: Processor not available.[/red]")
+
+
+@app.command()
+def set_key(
+    api_key: Annotated[
+        str,
+        typer.Option(
+            "--key",
+            help="OpenAI API key to store in keychain",
+            prompt="Enter your OpenAI API key",
+            hide_input=True,
+        ),
+    ],
+) -> None:
+    """Store OpenAI API key securely in macOS keychain."""
+    try:
+        manager = KeychainManager()
+        manager.store_openai_key(api_key)
+        console.print(
+            "[green]✓ OpenAI API key stored successfully in keychain![/green]"
+        )
+        console.print(
+            "You can now use OMBM without setting OPENAI_API_KEY environment variable."
+        )
+    except KeychainError as e:
+        console.print(f"[red]Error storing API key: {e}[/red]")
+        raise typer.Exit(code=1) from e
+
+
+@app.command()
+def delete_key() -> None:
+    """Delete OpenAI API key from macOS keychain."""
+    try:
+        manager = KeychainManager()
+        if manager.delete_openai_key():
+            console.print("[green]✓ OpenAI API key deleted from keychain.[/green]")
+        else:
+            console.print("[yellow]No API key found in keychain to delete.[/yellow]")
+    except KeychainError as e:
+        console.print(f"[red]Error deleting API key: {e}[/red]")
+        raise typer.Exit(code=1) from e
+
+
+@app.command()
+def key_status() -> None:
+    """Check if OpenAI API key is stored in keychain."""
+    try:
+        manager = KeychainManager()
+        if manager.has_openai_key():
+            console.print("[green]✓ OpenAI API key is stored in keychain.[/green]")
+        else:
+            console.print("[yellow]No OpenAI API key found in keychain.[/yellow]")
+
+            # Check environment variable as well
+            import os
+
+            if os.getenv("OPENAI_API_KEY"):
+                console.print(
+                    "[blue]OPENAI_API_KEY environment variable is set.[/blue]"
+                )
+            else:
+                console.print(
+                    "[red]No API key found. Use 'ombm set-key' to store one.[/red]"
+                )
+    except KeychainError as e:
+        console.print(f"[red]Error checking keychain: {e}[/red]")
+        raise typer.Exit(code=1) from e
 
 
 if __name__ == "__main__":
