@@ -92,7 +92,9 @@ class TestTaxonomyParser:
         """Fresh parser instance for each test."""
         return TaxonomyParser()
 
-    def test_parse_taxonomy_success(self, parser, valid_taxonomy_json, sample_metadata):
+    def test_parse_taxonomy_success(
+        self, parser, valid_taxonomy_json, sample_metadata
+    ) -> None:
         """Test successful taxonomy parsing."""
         result = parser.parse_taxonomy(valid_taxonomy_json, sample_metadata)
 
@@ -117,21 +119,21 @@ class TestTaxonomyParser:
         assert isinstance(github_bookmark, LLMMetadata)
         assert github_bookmark.url == "https://github.com/user/repo"
 
-    def test_parse_taxonomy_missing_folders(self, parser, sample_metadata):
+    def test_parse_taxonomy_missing_folders(self, parser, sample_metadata) -> None:
         """Test parsing taxonomy JSON missing 'folders' field."""
         invalid_json = {"invalid": "structure"}
 
         with pytest.raises(TreeBuilderError, match="missing 'folders' field"):
             parser.parse_taxonomy(invalid_json, sample_metadata)
 
-    def test_parse_taxonomy_folders_not_list(self, parser, sample_metadata):
+    def test_parse_taxonomy_folders_not_list(self, parser, sample_metadata) -> None:
         """Test parsing taxonomy JSON where 'folders' is not a list."""
         invalid_json = {"folders": "not_a_list"}
 
         with pytest.raises(TreeBuilderError, match="'folders' field must be a list"):
             parser.parse_taxonomy(invalid_json, sample_metadata)
 
-    def test_parse_folder_missing_name(self, parser, sample_metadata):
+    def test_parse_folder_missing_name(self, parser, sample_metadata) -> None:
         """Test parsing folder without name field."""
         invalid_json = {
             "folders": [
@@ -142,14 +144,14 @@ class TestTaxonomyParser:
         with pytest.raises(TreeBuilderError, match="missing 'name' field"):
             parser.parse_taxonomy(invalid_json, sample_metadata)
 
-    def test_parse_folder_empty_name(self, parser, sample_metadata):
+    def test_parse_folder_empty_name(self, parser, sample_metadata) -> None:
         """Test parsing folder with empty name."""
         invalid_json = {"folders": [{"name": "", "bookmarks": [], "subfolders": []}]}
 
         with pytest.raises(TreeBuilderError, match="cannot be empty"):
             parser.parse_taxonomy(invalid_json, sample_metadata)
 
-    def test_parse_bookmark_missing_url(self, parser, sample_metadata):
+    def test_parse_bookmark_missing_url(self, parser, sample_metadata) -> None:
         """Test parsing bookmark without URL."""
         invalid_json = {
             "folders": [
@@ -170,7 +172,7 @@ class TestTaxonomyParser:
         test_folder = result.children[0]
         assert len(test_folder.children) == 0  # Bookmark was skipped
 
-    def test_parse_bookmark_duplicate_url(self, parser, sample_metadata):
+    def test_parse_bookmark_duplicate_url(self, parser, sample_metadata) -> None:
         """Test parsing with duplicate bookmark URLs."""
         duplicate_json = {
             "folders": [
@@ -212,7 +214,7 @@ class TestTaxonomyParser:
         assert len(parser.duplicate_bookmarks) == 1
         assert "https://example.com" in parser.duplicate_bookmarks
 
-    def test_parse_bookmark_not_in_metadata(self, parser):
+    def test_parse_bookmark_not_in_metadata(self, parser) -> None:
         """Test parsing bookmark URL not in original metadata."""
         taxonomy_json = {
             "folders": [
@@ -245,7 +247,9 @@ class TestTaxonomyParser:
         test_folder = result.children[0]
         assert len(test_folder.children) == 0
 
-    def test_validate_completeness_missing_bookmarks(self, parser, sample_metadata):
+    def test_validate_completeness_missing_bookmarks(
+        self, parser, sample_metadata
+    ) -> None:
         """Test completeness validation with missing bookmarks."""
         # Taxonomy that doesn't include all bookmarks
         incomplete_json = {
@@ -270,7 +274,9 @@ class TestTaxonomyParser:
         assert isinstance(result, FolderNode)
         assert len(parser.missing_bookmarks) == 2  # 2 missing from sample_metadata
 
-    def test_get_parsing_stats(self, parser, valid_taxonomy_json, sample_metadata):
+    def test_get_parsing_stats(
+        self, parser, valid_taxonomy_json, sample_metadata
+    ) -> None:
         """Test parsing statistics collection."""
         parser.parse_taxonomy(valid_taxonomy_json, sample_metadata)
 
@@ -286,7 +292,7 @@ class TestTaxonomyParser:
         assert isinstance(stats["missing_urls"], list)
         assert isinstance(stats["duplicate_urls"], list)
 
-    def test_count_folders(self, parser, valid_taxonomy_json, sample_metadata):
+    def test_count_folders(self, parser, valid_taxonomy_json, sample_metadata) -> None:
         """Test folder counting functionality."""
         result = parser.parse_taxonomy(valid_taxonomy_json, sample_metadata)
 
@@ -299,7 +305,7 @@ class TestTaxonomyParser:
 class TestConvenienceFunctions:
     """Test cases for convenience functions."""
 
-    def test_parse_taxonomy_to_tree(self, valid_taxonomy_json, sample_metadata):
+    def test_parse_taxonomy_to_tree(self, valid_taxonomy_json, sample_metadata) -> None:
         """Test convenience function for parsing taxonomy."""
         result = parse_taxonomy_to_tree(valid_taxonomy_json, sample_metadata)
 
@@ -307,32 +313,32 @@ class TestConvenienceFunctions:
         assert result.name == "Bookmarks"
         assert len(result.children) == 2
 
-    def test_validate_taxonomy_json_valid(self, valid_taxonomy_json):
+    def test_validate_taxonomy_json_valid(self, valid_taxonomy_json) -> None:
         """Test validation of valid taxonomy JSON."""
         assert validate_taxonomy_json(valid_taxonomy_json) is True
 
-    def test_validate_taxonomy_json_not_dict(self):
+    def test_validate_taxonomy_json_not_dict(self) -> None:
         """Test validation of non-dictionary input."""
         assert validate_taxonomy_json("not_a_dict") is False
         assert validate_taxonomy_json([]) is False
         assert validate_taxonomy_json(None) is False
 
-    def test_validate_taxonomy_json_missing_folders(self):
+    def test_validate_taxonomy_json_missing_folders(self) -> None:
         """Test validation of JSON missing folders field."""
         invalid_json = {"other_field": "value"}
         assert validate_taxonomy_json(invalid_json) is False
 
-    def test_validate_taxonomy_json_folders_not_list(self):
+    def test_validate_taxonomy_json_folders_not_list(self) -> None:
         """Test validation of JSON where folders is not a list."""
         invalid_json = {"folders": "not_a_list"}
         assert validate_taxonomy_json(invalid_json) is False
 
-    def test_validate_taxonomy_json_folder_not_dict(self):
+    def test_validate_taxonomy_json_folder_not_dict(self) -> None:
         """Test validation of JSON with non-dict folder."""
         invalid_json = {"folders": ["not_a_dict"]}
         assert validate_taxonomy_json(invalid_json) is False
 
-    def test_validate_taxonomy_json_folder_missing_name(self):
+    def test_validate_taxonomy_json_folder_missing_name(self) -> None:
         """Test validation of JSON with folder missing name."""
         invalid_json = {
             "folders": [
@@ -341,7 +347,7 @@ class TestConvenienceFunctions:
         }
         assert validate_taxonomy_json(invalid_json) is False
 
-    def test_validate_taxonomy_json_invalid_bookmarks_type(self):
+    def test_validate_taxonomy_json_invalid_bookmarks_type(self) -> None:
         """Test validation of JSON with invalid bookmarks type."""
         invalid_json = {
             "folders": [
@@ -354,7 +360,7 @@ class TestConvenienceFunctions:
         }
         assert validate_taxonomy_json(invalid_json) is False
 
-    def test_validate_taxonomy_json_invalid_subfolders_type(self):
+    def test_validate_taxonomy_json_invalid_subfolders_type(self) -> None:
         """Test validation of JSON with invalid subfolders type."""
         invalid_json = {
             "folders": [
@@ -367,7 +373,7 @@ class TestConvenienceFunctions:
         }
         assert validate_taxonomy_json(invalid_json) is False
 
-    def test_validate_taxonomy_json_optional_fields_missing(self):
+    def test_validate_taxonomy_json_optional_fields_missing(self) -> None:
         """Test validation with optional fields missing (should be valid)."""
         minimal_json = {
             "folders": [
@@ -376,7 +382,7 @@ class TestConvenienceFunctions:
         }
         assert validate_taxonomy_json(minimal_json) is True
 
-    def test_validate_taxonomy_json_exception_handling(self):
+    def test_validate_taxonomy_json_exception_handling(self) -> None:
         """Test validation handles exceptions gracefully."""
 
         # Create an object that will cause an exception during validation

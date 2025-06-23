@@ -151,7 +151,7 @@ class TestTreeRenderer:
         """Renderer instance with mock console."""
         return TreeRenderer(console=console)
 
-    def test_init_default_console(self):
+    def test_init_default_console(self) -> None:
         """Test renderer initialization with default console."""
         renderer = TreeRenderer()
         assert renderer.console is not None
@@ -162,12 +162,12 @@ class TestTreeRenderer:
             "max_depth": 0,
         }
 
-    def test_init_custom_console(self, console):
+    def test_init_custom_console(self, console) -> None:
         """Test renderer initialization with custom console."""
         renderer = TreeRenderer(console=console)
         assert renderer.console is console
 
-    def test_render_tree_simple(self, renderer, simple_folder_tree):
+    def test_render_tree_simple(self, renderer, simple_folder_tree) -> None:
         """Test rendering a simple folder tree."""
         tree = renderer.render_tree(simple_folder_tree)
 
@@ -182,7 +182,7 @@ class TestTreeRenderer:
         assert stats["total_bookmarks"] == 3
         assert stats["max_depth"] == 1  # Folder children are processed at depth 1
 
-    def test_render_tree_nested(self, renderer, nested_folder_tree):
+    def test_render_tree_nested(self, renderer, nested_folder_tree) -> None:
         """Test rendering a nested folder tree."""
         tree = renderer.render_tree(nested_folder_tree)
 
@@ -201,7 +201,7 @@ class TestTreeRenderer:
         assert stats["total_bookmarks"] == 3
         assert stats["max_depth"] == 2  # Nested folders go to depth 2
 
-    def test_render_tree_empty(self, renderer, empty_folder_tree):
+    def test_render_tree_empty(self, renderer, empty_folder_tree) -> None:
         """Test rendering an empty folder tree."""
         tree = renderer.render_tree(empty_folder_tree)
 
@@ -214,7 +214,7 @@ class TestTreeRenderer:
         assert stats["total_bookmarks"] == 0
         assert stats["max_depth"] == 0
 
-    def test_render_tree_show_descriptions(self, renderer, simple_folder_tree):
+    def test_render_tree_show_descriptions(self, renderer, simple_folder_tree) -> None:
         """Test rendering tree with descriptions enabled."""
         tree = renderer.render_tree(simple_folder_tree, show_descriptions=True)
 
@@ -222,21 +222,21 @@ class TestTreeRenderer:
         # Descriptions are included in the text content, hard to test directly
         # but we can verify the method completes without error
 
-    def test_render_tree_hide_descriptions(self, renderer, simple_folder_tree):
+    def test_render_tree_hide_descriptions(self, renderer, simple_folder_tree) -> None:
         """Test rendering tree with descriptions disabled."""
         tree = renderer.render_tree(simple_folder_tree, show_descriptions=False)
 
         assert isinstance(tree, Tree)
         # Similar to above, mainly testing no errors occur
 
-    def test_render_tree_show_urls(self, renderer, simple_folder_tree):
+    def test_render_tree_show_urls(self, renderer, simple_folder_tree) -> None:
         """Test rendering tree with URLs enabled."""
         tree = renderer.render_tree(simple_folder_tree, show_urls=True)
 
         assert isinstance(tree, Tree)
         # URLs are included in the text content
 
-    def test_render_tree_url_truncation(self, renderer, simple_folder_tree):
+    def test_render_tree_url_truncation(self, renderer, simple_folder_tree) -> None:
         """Test URL truncation in tree rendering."""
         tree = renderer.render_tree(
             simple_folder_tree, show_urls=True, max_url_length=10
@@ -245,7 +245,7 @@ class TestTreeRenderer:
         assert isinstance(tree, Tree)
         # URLs longer than 10 chars should be truncated
 
-    def test_count_folder_contents(self, renderer):
+    def test_count_folder_contents(self, renderer) -> None:
         """Test folder content counting."""
         folder = FolderNode(
             name="Test Folder",
@@ -271,7 +271,7 @@ class TestTreeRenderer:
         assert counts["bookmarks"] == 2
         assert counts["subfolders"] == 1
 
-    def test_render_summary(self, renderer, simple_folder_tree):
+    def test_render_summary(self, renderer, simple_folder_tree) -> None:
         """Test summary panel rendering."""
         # First render the tree to populate stats
         renderer.render_tree(simple_folder_tree)
@@ -281,7 +281,7 @@ class TestTreeRenderer:
         assert isinstance(summary, Panel)
         # Panel contains a table with statistics
 
-    def test_calculate_comprehensive_stats(self, renderer, nested_folder_tree):
+    def test_calculate_comprehensive_stats(self, renderer, nested_folder_tree) -> None:
         """Test comprehensive statistics calculation."""
         stats = renderer._calculate_comprehensive_stats(nested_folder_tree)
 
@@ -292,9 +292,8 @@ class TestTreeRenderer:
         assert stats["max_depth"] == 2  # Nested folders go 2 levels deep
         assert "avg_bookmarks" in stats
         assert "largest_folder_size" in stats
-        assert "folder_sizes" in stats
 
-    def test_print_tree_with_summary(self, renderer, simple_folder_tree):
+    def test_print_tree_with_summary(self, renderer, simple_folder_tree) -> None:
         """Test printing tree with summary."""
         # This mainly tests that the method runs without error
         # since we're using a StringIO console
@@ -304,7 +303,7 @@ class TestTreeRenderer:
         output = renderer.console.file.getvalue()
         assert len(output) > 0
 
-    def test_print_tree_without_summary(self, renderer, simple_folder_tree):
+    def test_print_tree_without_summary(self, renderer, simple_folder_tree) -> None:
         """Test printing tree without summary."""
         renderer.print_tree(simple_folder_tree, show_summary=False)
 
@@ -312,7 +311,7 @@ class TestTreeRenderer:
         output = renderer.console.file.getvalue()
         assert len(output) > 0
 
-    def test_print_tree_all_options(self, renderer, simple_folder_tree):
+    def test_print_tree_all_options(self, renderer, simple_folder_tree) -> None:
         """Test printing tree with all display options enabled."""
         renderer.print_tree(
             simple_folder_tree,
@@ -326,13 +325,15 @@ class TestTreeRenderer:
         output = renderer.console.file.getvalue()
         assert len(output) > 0
 
-    def test_get_rendering_stats_initial(self, renderer):
+    def test_get_rendering_stats_initial(self, renderer) -> None:
         """Test getting rendering stats before any rendering."""
         stats = renderer.get_rendering_stats()
 
         assert stats == {"total_folders": 0, "total_bookmarks": 0, "max_depth": 0}
 
-    def test_get_rendering_stats_after_render(self, renderer, simple_folder_tree):
+    def test_get_rendering_stats_after_render(
+        self, renderer, simple_folder_tree
+    ) -> None:
         """Test getting rendering stats after rendering."""
         renderer.render_tree(simple_folder_tree)
 
@@ -342,7 +343,7 @@ class TestTreeRenderer:
         assert stats["total_bookmarks"] > 0
         assert isinstance(stats["max_depth"], int)
 
-    def test_folder_sorting(self, renderer):
+    def test_folder_sorting(self, renderer) -> None:
         """Test that folders and bookmarks are sorted alphabetically."""
         unsorted_tree = FolderNode(
             name="Root",
@@ -375,7 +376,7 @@ class TestTreeRenderer:
 class TestConvenienceFunctions:
     """Test cases for convenience functions."""
 
-    def test_render_bookmark_tree(self, simple_folder_tree):
+    def test_render_bookmark_tree(self, simple_folder_tree) -> None:
         """Test convenience function for rendering bookmark tree."""
         console = Console(file=StringIO(), width=80)
 
@@ -393,7 +394,7 @@ class TestConvenienceFunctions:
         output = console.file.getvalue()
         assert len(output) > 0
 
-    def test_render_bookmark_tree_default_console(self, simple_folder_tree):
+    def test_render_bookmark_tree_default_console(self, simple_folder_tree) -> None:
         """Test convenience function with default console."""
         # Should not raise any exceptions
         with patch("ombm.renderer.TreeRenderer") as mock_renderer_class:
@@ -405,13 +406,13 @@ class TestConvenienceFunctions:
             mock_renderer_class.assert_called_once_with(None)
             mock_renderer.print_tree.assert_called_once()
 
-    def test_tree_to_rich(self, simple_folder_tree):
+    def test_tree_to_rich(self, simple_folder_tree) -> None:
         """Test convenience function for converting to Rich Tree."""
         tree = tree_to_rich(simple_folder_tree)
 
         assert isinstance(tree, Tree)
 
-    def test_tree_to_rich_with_options(self, simple_folder_tree):
+    def test_tree_to_rich_with_options(self, simple_folder_tree) -> None:
         """Test tree_to_rich with various options."""
         tree = tree_to_rich(
             simple_folder_tree,
@@ -422,7 +423,7 @@ class TestConvenienceFunctions:
 
         assert isinstance(tree, Tree)
 
-    def test_tree_to_rich_empty(self, empty_folder_tree):
+    def test_tree_to_rich_empty(self, empty_folder_tree) -> None:
         """Test tree_to_rich with empty tree."""
         tree = tree_to_rich(empty_folder_tree)
 
@@ -433,7 +434,7 @@ class TestConvenienceFunctions:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_very_long_urls(self):
+    def test_very_long_urls(self) -> None:
         """Test handling of very long URLs."""
         console = Console(file=StringIO(), width=80)
         renderer = TreeRenderer(console=console)
@@ -454,7 +455,7 @@ class TestEdgeCases:
         result = renderer.render_tree(tree, show_urls=True, max_url_length=50)
         assert isinstance(result, Tree)
 
-    def test_empty_bookmark_descriptions(self):
+    def test_empty_bookmark_descriptions(self) -> None:
         """Test handling of bookmarks with empty descriptions."""
         console = Console(file=StringIO(), width=80)
         renderer = TreeRenderer(console=console)
@@ -474,7 +475,7 @@ class TestEdgeCases:
         result = renderer.render_tree(tree, show_descriptions=True)
         assert isinstance(result, Tree)
 
-    def test_special_characters_in_names(self):
+    def test_special_characters_in_names(self) -> None:
         """Test handling of special characters in folder and bookmark names."""
         console = Console(file=StringIO(), width=80)
         renderer = TreeRenderer(console=console)
@@ -499,7 +500,7 @@ class TestEdgeCases:
         result = renderer.render_tree(tree)
         assert isinstance(result, Tree)
 
-    def test_deeply_nested_structure(self):
+    def test_deeply_nested_structure(self) -> None:
         """Test handling of deeply nested folder structures."""
         console = Console(file=StringIO(), width=80)
         renderer = TreeRenderer(console=console)

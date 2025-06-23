@@ -48,7 +48,7 @@ class TestCacheManager:
     """Test cases for CacheManager."""
 
     @pytest.mark.asyncio
-    async def test_initialize_creates_tables(self, cache_manager):
+    async def test_initialize_creates_tables(self, cache_manager) -> None:
         """Test that initialization creates required tables."""
         await cache_manager.initialize()
 
@@ -85,7 +85,7 @@ class TestCacheManager:
                 assert result is not None
 
     @pytest.mark.asyncio
-    async def test_initialize_is_idempotent(self, cache_manager):
+    async def test_initialize_is_idempotent(self, cache_manager) -> None:
         """Test that multiple initializations don't cause issues."""
         await cache_manager.initialize()
         await cache_manager.initialize()  # Should not raise error
@@ -103,7 +103,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_store_and_retrieve_scrape_result(
         self, cache_manager, sample_scrape_result
-    ):
+    ) -> None:
         """Test storing and retrieving scrape results."""
         # Store the result
         await cache_manager.store_scrape_result(sample_scrape_result)
@@ -119,7 +119,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_store_and_retrieve_llm_metadata(
         self, cache_manager, sample_llm_metadata
-    ):
+    ) -> None:
         """Test storing and retrieving LLM metadata."""
         # Store the metadata
         await cache_manager.store_llm_metadata(sample_llm_metadata)
@@ -134,7 +134,7 @@ class TestCacheManager:
         assert retrieved.tokens_used == sample_llm_metadata.tokens_used
 
     @pytest.mark.asyncio
-    async def test_get_nonexistent_entries_returns_none(self, cache_manager):
+    async def test_get_nonexistent_entries_returns_none(self, cache_manager) -> None:
         """Test that querying non-existent entries returns None."""
         await cache_manager.initialize()
 
@@ -145,7 +145,7 @@ class TestCacheManager:
         assert llm_metadata is None
 
     @pytest.mark.asyncio
-    async def test_url_hashing_consistency(self, cache_manager):
+    async def test_url_hashing_consistency(self, cache_manager) -> None:
         """Test that URL hashing is consistent."""
         url = "https://example.com/test"
         hash1 = cache_manager._hash_url(url)
@@ -155,7 +155,7 @@ class TestCacheManager:
         assert len(hash1) == 64  # SHA256 hex digest length
 
     @pytest.mark.asyncio
-    async def test_insert_or_replace_functionality(self, cache_manager):
+    async def test_insert_or_replace_functionality(self, cache_manager) -> None:
         """Test that storing the same URL replaces previous data."""
         url = "https://example.com"
 
@@ -177,7 +177,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_clear_cache(
         self, cache_manager, sample_scrape_result, sample_llm_metadata
-    ):
+    ) -> None:
         """Test clearing all cached data."""
         # Store some data
         await cache_manager.store_scrape_result(sample_scrape_result)
@@ -199,7 +199,7 @@ class TestCacheManager:
         assert llm_metadata is None
 
     @pytest.mark.asyncio
-    async def test_cache_stats(self, cache_manager):
+    async def test_cache_stats(self, cache_manager) -> None:
         """Test cache statistics functionality."""
         # Initially empty
         stats = await cache_manager.get_cache_stats()
@@ -235,7 +235,7 @@ class TestCacheManager:
         assert stats["total_tokens_used"] == 250
 
     @pytest.mark.asyncio
-    async def test_default_cache_directory(self):
+    async def test_default_cache_directory(self) -> None:
         """Test that default cache directory is created."""
         cache_manager = CacheManager()  # Use default directory
         await cache_manager.initialize()

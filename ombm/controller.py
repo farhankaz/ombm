@@ -9,6 +9,8 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from types import TracebackType
+from typing import Any, cast
 
 from .bookmark_adapter import BookmarkAdapter
 from .models import BookmarkRecord, FolderNode, LLMMetadata
@@ -45,24 +47,30 @@ class BookmarkController:
         """
         self.bookmark_adapter = bookmark_adapter or BookmarkAdapter()
         self.processor = processor
-        self._processor_context = None
+        self._processor_context: BookmarkProcessor | None = None
+        self._manages_processor_lifecycle = False
 
     async def __aenter__(self) -> "BookmarkController":
         """Async context manager entry."""
-        # Initialize processor if needed
         if self.processor is None:
             self.processor = BookmarkProcessor()
+            self._manages_processor_lifecycle = True
 
-        # Enter processor context
         self._processor_context = await self.processor.__aenter__()
         return self
 
     async def __aexit__(
-        self, exc_type: type | None, exc_val: Exception | None, exc_tb: object
+        self,
+        exc_type: type[Exception] | None,
+        exc_val: Exception | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         """Async context manager exit."""
-        if self._processor_context is not None:
+        if self.processor and self._manages_processor_lifecycle:
             await self.processor.__aexit__(exc_type, exc_val, exc_tb)
+        self.processor = None
+        self._processor_context = None
+        self._manages_processor_lifecycle = False
 
     async def get_bookmarks(
         self, max_bookmarks: int | None = None
@@ -126,7 +134,7 @@ class BookmarkController:
 
         # Extract successful metadata
         metadata_list: list[LLMMetadata] = []
-        errors = []
+        errors: list[str] = []
 
         for result in results:
             if result.success and result.llm_metadata is not None:
@@ -195,7 +203,7 @@ class BookmarkController:
             logger.error(f"Aggregate metadata collection failed: {e}")
             raise ControllerError(f"Pipeline failed: {e}") from e
 
-    async def get_processing_stats(self) -> dict:
+    async def get_processing_stats(self) -> dict[str, object]:
         """
         Get statistics about the processing pipeline.
 
@@ -233,7 +241,7 @@ class BookmarkController:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Prepare export data
-            export_data = {
+            export_data: dict[str, object] = {
                 "bookmarks": [
                     {
                         "url": meta.url,
@@ -287,7 +295,7 @@ class BookmarkController:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Prepare export data (copy to avoid modifying original)
-            export_data = taxonomy_data.copy()
+            export_data: dict[str, object] = taxonomy_data.copy()
 
             if include_metadata and "_metadata" not in export_data:
                 export_data["_metadata"] = {
@@ -299,7 +307,8 @@ class BookmarkController:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-            folder_count = len(export_data.get("folders", []))
+            folders_list = cast("list[Any]", export_data.get("folders", []))
+            folder_count = len(folders_list)
             logger.info(
                 f"Exported taxonomy with {folder_count} folders to {output_path}"
             )
@@ -330,7 +339,7 @@ class BookmarkController:
 
             # Convert FolderNode to dict recursively
             def folder_to_dict(node: FolderNode) -> dict:
-                result = {"name": node.name, "children": []}
+                result: dict[str, Any] = {"name": node.name, "children": []}
 
                 for child in node.children:
                     if isinstance(child, FolderNode):

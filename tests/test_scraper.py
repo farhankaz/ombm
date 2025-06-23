@@ -55,7 +55,7 @@ class TestHTTPXScraper:
         return HTTPXScraper(timeout=10)
 
     @pytest.mark.asyncio
-    async def test_successful_fetch(self, httpx_scraper, sample_html):
+    async def test_successful_fetch(self, httpx_scraper, sample_html) -> None:
         """Test successful content fetching with HTTPX."""
         with patch("httpx.AsyncClient") as mock_client:
             # Setup mock response
@@ -78,7 +78,7 @@ class TestHTTPXScraper:
             assert len(result.text) <= 10000  # Should be truncated if too long
 
     @pytest.mark.asyncio
-    async def test_http_error_handling(self, httpx_scraper):
+    async def test_http_error_handling(self, httpx_scraper) -> None:
         """Test HTTP error handling."""
         with patch("httpx.AsyncClient") as mock_client:
             # Setup mock to raise HTTP error
@@ -96,7 +96,7 @@ class TestHTTPXScraper:
                 await httpx_scraper.fetch("https://example.com/not-found")
 
     @pytest.mark.asyncio
-    async def test_request_error_handling(self, httpx_scraper):
+    async def test_request_error_handling(self, httpx_scraper) -> None:
         """Test request error handling."""
         with patch("httpx.AsyncClient") as mock_client:
             # Setup mock to raise request error
@@ -108,7 +108,7 @@ class TestHTTPXScraper:
                 await httpx_scraper.fetch("https://invalid-url.com")
 
     @pytest.mark.asyncio
-    async def test_text_truncation(self, httpx_scraper):
+    async def test_text_truncation(self, httpx_scraper) -> None:
         """Test that long text content is properly truncated."""
         long_html = f"""
         <html>
@@ -143,7 +143,7 @@ class TestPlaywrightScraper:
         return PlaywrightScraper(timeout=10000, headless=True)
 
     @pytest.mark.asyncio
-    async def test_context_manager(self, playwright_scraper):
+    async def test_context_manager(self, playwright_scraper) -> None:
         """Test Playwright scraper context manager."""
         with patch("ombm.scraper.async_playwright") as mock_playwright:
             mock_browser = AsyncMock()
@@ -169,7 +169,7 @@ class TestPlaywrightScraper:
             mock_browser.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_successful_fetch(self, playwright_scraper, sample_html):
+    async def test_successful_fetch(self, playwright_scraper, sample_html) -> None:
         """Test successful content fetching with Playwright."""
         with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup mocks
@@ -208,7 +208,7 @@ class TestPlaywrightScraper:
             await playwright_scraper.close()
 
     @pytest.mark.asyncio
-    async def test_http_error_handling(self, playwright_scraper):
+    async def test_http_error_handling(self, playwright_scraper) -> None:
         """Test HTTP error handling in Playwright."""
         with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup mocks
@@ -239,7 +239,7 @@ class TestPlaywrightScraper:
             await playwright_scraper.close()
 
     @pytest.mark.asyncio
-    async def test_playwright_timeout_error(self, playwright_scraper):
+    async def test_playwright_timeout_error(self, playwright_scraper) -> None:
         """Test Playwright timeout error handling."""
         with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup mocks
@@ -268,7 +268,7 @@ class TestPlaywrightScraper:
             await playwright_scraper.close()
 
     @pytest.mark.asyncio
-    async def test_browser_not_started_error(self, playwright_scraper):
+    async def test_browser_not_started_error(self, playwright_scraper) -> None:
         """Test error when browser is not started."""
         with pytest.raises(ScraperError, match="Browser not started"):
             await playwright_scraper.fetch("https://example.com")
@@ -278,7 +278,7 @@ class TestWebScraper:
     """Test main WebScraper class with fallback logic."""
 
     @pytest.mark.asyncio
-    async def test_playwright_success(self, sample_html):
+    async def test_playwright_success(self, sample_html) -> None:
         """Test successful scraping with Playwright."""
         with patch("ombm.scraper.async_playwright") as mock_playwright:
             # Setup Playwright mocks
@@ -310,7 +310,7 @@ class TestWebScraper:
                 assert result.html_title == "Test Page Title"
 
     @pytest.mark.asyncio
-    async def test_fallback_to_httpx(self, sample_html):
+    async def test_fallback_to_httpx(self, sample_html) -> None:
         """Test fallback from Playwright to HTTPX."""
         with (
             patch("ombm.scraper.async_playwright") as mock_playwright,
@@ -351,7 +351,7 @@ class TestWebScraper:
                 assert result.html_title == "Test Page Title"
 
     @pytest.mark.asyncio
-    async def test_httpx_only_mode(self, sample_html):
+    async def test_httpx_only_mode(self, sample_html) -> None:
         """Test HTTPX-only mode (no Playwright)."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = MagicMock()
@@ -369,7 +369,7 @@ class TestWebScraper:
                 assert result.html_title == "Test Page Title"
 
     @pytest.mark.asyncio
-    async def test_all_methods_fail(self):
+    async def test_all_methods_fail(self) -> None:
         """Test when both Playwright and HTTPX fail."""
         with (
             patch("ombm.scraper.async_playwright") as mock_playwright,
@@ -408,7 +408,7 @@ class TestScrapingIntegration:
     """Integration tests for scraping functionality."""
 
     @pytest.mark.asyncio
-    async def test_scrape_url_convenience_function(self, sample_html):
+    async def test_scrape_url_convenience_function(self, sample_html) -> None:
         """Test the convenience scrape_url function."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = MagicMock()
@@ -425,7 +425,7 @@ class TestScrapingIntegration:
             assert result.html_title == "Test Page Title"
 
     @pytest.mark.asyncio
-    async def test_real_website_scraping(self):
+    async def test_real_website_scraping(self) -> None:
         """Test scraping a real website (example.com)."""
         # This test requires internet connection and should be marked as integration
         pytest.skip("Integration test - requires internet connection")
@@ -442,7 +442,7 @@ class TestScrapingIntegration:
 class TestReadabilityExtraction:
     """Test readability text extraction."""
 
-    def test_readability_extraction_with_complex_html(self):
+    def test_readability_extraction_with_complex_html(self) -> None:
         """Test readability extraction with complex HTML."""
         complex_html = """
         <!DOCTYPE html>

@@ -119,14 +119,31 @@ class TestBookmarkController:
         )
 
     @pytest.mark.asyncio
-    async def test_context_manager(self, controller, mock_processor):
+    async def test_context_manager(self, mock_processor):
         """Test async context manager functionality."""
+        # Test with a processor that is externally created and passed
+        controller = BookmarkController(processor=mock_processor)
         async with controller as ctx:
             assert ctx is controller
+            assert controller.processor is mock_processor
             assert controller._processor_context is not None
 
+        # __aexit__ should not be called on processors we don't create
         mock_processor.__aenter__.assert_called_once()
-        mock_processor.__aexit__.assert_called_once()
+        mock_processor.__aexit__.assert_not_called()
+
+        # Test with a processor that the controller creates
+        mock_processor.reset_mock()
+        controller = BookmarkController(processor=None)
+        # We need to mock the created processor
+        with patch("ombm.controller.BookmarkProcessor", return_value=mock_processor):
+            async with controller as ctx:
+                assert ctx is controller
+                assert controller.processor is mock_processor
+                assert controller._processor_context is not None
+
+            mock_processor.__aenter__.assert_called_once()
+            mock_processor.__aexit__.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_bookmarks_success(

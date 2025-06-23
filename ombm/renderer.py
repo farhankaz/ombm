@@ -247,7 +247,9 @@ class TreeRenderer:
             border_style="blue",
         )
 
-    def _calculate_comprehensive_stats(self, node: FolderNode, depth: int = 0) -> dict:
+    def _calculate_comprehensive_stats(
+        self, node: FolderNode, depth: int = 0
+    ) -> dict[str, int | float]:
         """
         Calculate comprehensive statistics for the tree.
 
@@ -258,40 +260,49 @@ class TreeRenderer:
         Returns:
             Dictionary with comprehensive statistics
         """
-        stats = {
-            "total_folders": 1,  # Count this folder
-            "total_bookmarks": 0,
-            "max_depth": depth,
-            "folder_sizes": [],
+        folder_sizes: list[int] = []
+
+        def _collect_stats(node: FolderNode, depth: int) -> dict[str, int]:
+            nonlocal folder_sizes
+            folder_size = 0
+            total_folders = 1
+            total_bookmarks = 0
+            max_depth = depth
+
+            for child in node.children:
+                if isinstance(child, FolderNode):
+                    child_stats = _collect_stats(child, depth + 1)
+                    total_folders += child_stats["total_folders"]
+                    total_bookmarks += child_stats["total_bookmarks"]
+                    max_depth = max(max_depth, child_stats["max_depth"])
+                else:  # LLMMetadata
+                    total_bookmarks += 1
+                    folder_size += 1
+
+            folder_sizes.append(folder_size)
+            return {
+                "total_folders": total_folders,
+                "total_bookmarks": total_bookmarks,
+                "max_depth": max_depth,
+            }
+
+        stats = _collect_stats(node, depth)
+
+        # Calculate derived stats
+        avg_bookmarks = (
+            stats["total_bookmarks"] / stats["total_folders"]
+            if stats["total_folders"] > 0
+            else 0.0
+        )
+        largest_folder_size: int = max(folder_sizes or [0])
+
+        return {
+            "total_folders": stats["total_folders"],
+            "total_bookmarks": stats["total_bookmarks"],
+            "max_depth": stats["max_depth"],
+            "avg_bookmarks": avg_bookmarks,
+            "largest_folder_size": largest_folder_size,
         }
-
-        folder_size = 0
-
-        for child in node.children:
-            if isinstance(child, FolderNode):
-                child_stats = self._calculate_comprehensive_stats(child, depth + 1)
-                stats["total_folders"] += child_stats["total_folders"]
-                stats["total_bookmarks"] += child_stats["total_bookmarks"]
-                stats["max_depth"] = max(stats["max_depth"], child_stats["max_depth"])
-                stats["folder_sizes"].extend(child_stats["folder_sizes"])
-            else:  # LLMMetadata
-                stats["total_bookmarks"] += 1
-                folder_size += 1
-
-        stats["folder_sizes"].append(folder_size)
-
-        # Calculate derived stats for root call
-        if depth == 0:
-            stats["avg_bookmarks"] = (
-                stats["total_bookmarks"] / stats["total_folders"]
-                if stats["total_folders"] > 0
-                else 0
-            )
-            stats["largest_folder_size"] = (
-                max(stats["folder_sizes"]) if stats["folder_sizes"] else 0
-            )
-
-        return stats
 
     def print_tree(
         self,

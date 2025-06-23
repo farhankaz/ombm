@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import openai
 from jinja2 import Environment, FileSystemLoader, Template
@@ -200,7 +201,9 @@ class LLMService:
             original_title=scrape_result.html_title,
         )
 
-    async def propose_taxonomy(self, metadata_list: list[LLMMetadata]) -> dict:
+    async def propose_taxonomy(
+        self, metadata_list: list[LLMMetadata]
+    ) -> dict[str, Any]:
         """
         Generate a hierarchical folder taxonomy for a list of bookmark metadata.
 
@@ -265,7 +268,7 @@ class LLMService:
                     f"Generated taxonomy with {len(taxonomy_data['folders'])} top-level folders, "
                     f"tokens used: {tokens_used}"
                 )
-                return taxonomy_data
+                return taxonomy_data  # type: ignore[no-any-return]
 
             except openai.RateLimitError as e:
                 logger.warning(

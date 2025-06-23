@@ -13,7 +13,7 @@ from ombm.models import OMBMConfig
 class TestConfigLoader:
     """Test configuration loader functionality."""
 
-    def test_default_config_structure(self):
+    def test_default_config_structure(self) -> None:
         """Test that default config has expected structure."""
         config = ConfigLoader.DEFAULT_CONFIG
 
@@ -40,7 +40,7 @@ class TestConfigLoader:
         assert scraping["max_retries"] == 2
         assert scraping["retry_delay"] == 1.0
 
-    def test_load_defaults_when_no_file(self, tmp_path):
+    def test_load_defaults_when_no_file(self, tmp_path) -> None:
         """Test loading defaults when config file doesn't exist."""
         config_path = tmp_path / "nonexistent.toml"
         loader = ConfigLoader(config_path)
@@ -52,7 +52,7 @@ class TestConfigLoader:
         assert config.scraping.timeout == 10.0
         assert config.concurrency.default_workers == 4
 
-    def test_load_from_toml_file(self, tmp_path):
+    def test_load_from_toml_file(self, tmp_path) -> None:
         """Test loading configuration from TOML file."""
         config_path = tmp_path / "config.toml"
         config_content = """
@@ -84,7 +84,7 @@ default_workers = 8
         assert config.openai.temperature == 0.1  # Not overridden
         assert config.cache.enabled is True  # Not overridden
 
-    def test_env_overrides(self, tmp_path):
+    def test_env_overrides(self, tmp_path) -> None:
         """Test environment variable overrides."""
         config_path = tmp_path / "config.toml"
         loader = ConfigLoader(config_path)
@@ -106,7 +106,7 @@ default_workers = 8
         assert config.cache.enabled is False
         assert config.concurrency.default_workers == 12
 
-    def test_env_value_conversion(self, tmp_path):
+    def test_env_value_conversion(self, tmp_path) -> None:
         """Test environment variable type conversion."""
         config_path = tmp_path / "config.toml"
         loader = ConfigLoader(config_path)
@@ -126,7 +126,7 @@ default_workers = 8
         assert config.scraping.timeout == 12.5
         assert config.logging.level == "DEBUG"
 
-    def test_boolean_env_conversion(self):
+    def test_boolean_env_conversion(self) -> None:
         """Test boolean environment variable conversion."""
         loader = ConfigLoader()
 
@@ -141,7 +141,7 @@ default_workers = 8
         # Test non-boolean values
         assert loader._convert_env_value("maybe") == "maybe"
 
-    def test_create_default_config(self, tmp_path):
+    def test_create_default_config(self, tmp_path) -> None:
         """Test creating default configuration file."""
         config_path = tmp_path / "config.toml"
         loader = ConfigLoader(config_path)
@@ -157,7 +157,7 @@ default_workers = 8
         assert "[concurrency]" in content
         assert 'model = "gpt-4o"' in content
 
-    def test_create_default_config_directory_creation(self, tmp_path):
+    def test_create_default_config_directory_creation(self, tmp_path) -> None:
         """Test that config directory is created if it doesn't exist."""
         config_dir = tmp_path / "nested" / "config"
         config_path = config_dir / "config.toml"
@@ -168,7 +168,7 @@ default_workers = 8
         assert config_dir.exists()
         assert config_path.exists()
 
-    def test_config_file_permissions(self, tmp_path):
+    def test_config_file_permissions(self, tmp_path) -> None:
         """Test that config directory is created with proper permissions."""
         config_path = tmp_path / "config.toml"
         loader = ConfigLoader(config_path)
@@ -180,7 +180,7 @@ default_workers = 8
         perms = oct(stat.st_mode)[-3:]
         assert perms == "700"
 
-    def test_merge_dicts(self):
+    def test_merge_dicts(self) -> None:
         """Test dictionary merging functionality."""
         loader = ConfigLoader()
 
@@ -197,7 +197,7 @@ default_workers = 8
         assert result["c"] == 4  # unchanged
         assert result["d"] == 5  # added
 
-    def test_path_expansion(self, tmp_path):
+    def test_path_expansion(self, tmp_path) -> None:
         """Test path expansion functionality."""
         config_path = tmp_path / "config.toml"
         config_content = """
@@ -214,7 +214,7 @@ config_dir = "~/custom_config"
         assert "~" not in config.paths.config_dir
         assert config.paths.config_dir.startswith("/")
 
-    def test_invalid_toml_file(self, tmp_path):
+    def test_invalid_toml_file(self, tmp_path) -> None:
         """Test handling of invalid TOML file."""
         config_path = tmp_path / "config.toml"
         config_path.write_text("invalid toml content [[[")
@@ -229,7 +229,7 @@ config_dir = "~/custom_config"
 class TestOMBMConfig:
     """Test OMBMConfig model functionality."""
 
-    def test_from_dict(self):
+    def test_from_dict(self) -> None:
         """Test creating config from dictionary."""
         data = ConfigLoader.DEFAULT_CONFIG
         config = OMBMConfig.from_dict(data)
@@ -239,7 +239,7 @@ class TestOMBMConfig:
         assert config.scraping.timeout == 10.0
         assert config.concurrency.default_workers == 4
 
-    def test_path_methods(self):
+    def test_path_methods(self) -> None:
         """Test path helper methods."""
         data = ConfigLoader.DEFAULT_CONFIG.copy()
         data["paths"]["config_dir"] = "/tmp/test_config"
@@ -256,7 +256,7 @@ class TestOMBMConfig:
 class TestModuleFunctions:
     """Test module-level convenience functions."""
 
-    def test_load_config(self, tmp_path):
+    def test_load_config(self, tmp_path) -> None:
         """Test load_config convenience function."""
         config_path = tmp_path / "config.toml"
         config_content = """
@@ -271,7 +271,7 @@ model = "custom-model"
         assert isinstance(config, OMBMConfig)
         assert config.openai.model == "custom-model"
 
-    def test_create_default_config_function(self, tmp_path):
+    def test_create_default_config_function(self, tmp_path) -> None:
         """Test create_default_config convenience function."""
         config_path = tmp_path / "config.toml"
 
@@ -302,7 +302,7 @@ def clean_env():
 class TestIntegration:
     """Integration tests for configuration system."""
 
-    def test_full_config_cycle(self, tmp_path, clean_env):
+    def test_full_config_cycle(self, tmp_path, clean_env) -> None:
         """Test complete configuration loading cycle."""
         config_path = tmp_path / "config.toml"
 

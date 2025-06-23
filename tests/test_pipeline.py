@@ -53,7 +53,7 @@ class TestProcessingResult:
 
     def test_successful_result(
         self, sample_bookmark, sample_scrape_result, sample_llm_metadata
-    ):
+    ) -> None:
         """Test successful processing result."""
         result = ProcessingResult(
             bookmark=sample_bookmark,
@@ -69,7 +69,7 @@ class TestProcessingResult:
         assert result.llm_metadata == sample_llm_metadata
         assert result.used_cache is False
 
-    def test_failed_result(self, sample_bookmark):
+    def test_failed_result(self, sample_bookmark) -> None:
         """Test failed processing result."""
         result = ProcessingResult(bookmark=sample_bookmark, error="Test error")
 
@@ -123,7 +123,7 @@ class TestBookmarkProcessor:
         mock_cache_manager,
         mock_scraper,
         mock_llm_service,
-    ):
+    ) -> None:
         """Test successful processing without cached data."""
         # Setup mocks
         mock_scraper.fetch = AsyncMock(return_value=sample_scrape_result)
@@ -173,7 +173,7 @@ class TestBookmarkProcessor:
         mock_cache_manager,
         mock_scraper,
         mock_llm_service,
-    ):
+    ) -> None:
         """Test processing with cached scrape and LLM data."""
         # Setup cache to return data
         mock_cache_manager.get_scrape_result = AsyncMock(
@@ -203,7 +203,7 @@ class TestBookmarkProcessor:
     @pytest.mark.asyncio
     async def test_scraping_error_handling(
         self, sample_bookmark, mock_cache_manager, mock_scraper, mock_llm_service
-    ):
+    ) -> None:
         """Test handling of scraping errors."""
         # Setup scraper to fail
         mock_scraper.fetch = AsyncMock(side_effect=ScraperError("Scraping failed"))
@@ -231,7 +231,7 @@ class TestBookmarkProcessor:
         mock_cache_manager,
         mock_scraper,
         mock_llm_service,
-    ):
+    ) -> None:
         """Test handling of LLM errors."""
         # Setup mocks
         mock_scraper.fetch = AsyncMock(return_value=sample_scrape_result)
@@ -263,7 +263,7 @@ class TestBookmarkProcessor:
         mock_cache_manager,
         mock_scraper,
         mock_llm_service,
-    ):
+    ) -> None:
         """Test force refresh skips cache."""
         # Setup cache to return data (which should be ignored)
         mock_cache_manager.get_scrape_result = AsyncMock(
@@ -309,7 +309,7 @@ class TestBookmarkProcessor:
         mock_cache_manager,
         mock_scraper,
         mock_llm_service,
-    ):
+    ) -> None:
         """Test processing with cache disabled."""
         mock_scraper.fetch = AsyncMock(return_value=sample_scrape_result)
         mock_llm_service.title_desc_from_scrape_result = AsyncMock(
@@ -340,7 +340,7 @@ class TestBookmarkProcessor:
     @pytest.mark.asyncio
     async def test_process_multiple_bookmarks(
         self, mock_cache_manager, mock_scraper, mock_llm_service
-    ):
+    ) -> None:
         """Test processing multiple bookmarks concurrently."""
         # Create multiple bookmarks
         bookmarks = [
@@ -394,7 +394,7 @@ class TestBookmarkProcessor:
     @pytest.mark.asyncio
     async def test_get_processing_stats(
         self, mock_cache_manager, mock_scraper, mock_llm_service
-    ):
+    ) -> None:
         """Test getting processing statistics."""
         processor = BookmarkProcessor(
             cache_manager=mock_cache_manager,
@@ -414,7 +414,7 @@ class TestBookmarkProcessor:
     @pytest.mark.asyncio
     async def test_get_processing_stats_cache_disabled(
         self, mock_scraper, mock_llm_service
-    ):
+    ) -> None:
         """Test stats with cache disabled."""
         processor = BookmarkProcessor(
             scraper=mock_scraper, llm_service=mock_llm_service, use_cache=False
@@ -430,7 +430,7 @@ class TestConvenienceFunction:
     """Test convenience functions."""
 
     @pytest.mark.asyncio
-    async def test_process_url_function(self):
+    async def test_process_url_function(self) -> None:
         """Test the convenience process_url function."""
         with patch("ombm.pipeline.BookmarkProcessor") as mock_processor_class:
             mock_processor = AsyncMock()
@@ -464,7 +464,7 @@ class TestIntegration:
     """Integration tests for the pipeline."""
 
     @pytest.mark.asyncio
-    async def test_end_to_end_processing(self):
+    async def test_end_to_end_processing(self) -> None:
         """Test end-to-end processing with mocked components."""
         with (
             patch("ombm.pipeline.CacheManager") as mock_cache_class,
