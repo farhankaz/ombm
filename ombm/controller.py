@@ -8,12 +8,14 @@ metadata aggregation, taxonomy generation, and tree rendering.
 import asyncio
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Any, cast
+from typing import Any
 
 from .bookmark_adapter import BookmarkAdapter
 from .models import BookmarkRecord, FolderNode, LLMMetadata
+from .persistence import PersistenceManager
 from .pipeline import BookmarkProcessor
 
 logger = logging.getLogger(__name__)
@@ -37,6 +39,7 @@ class BookmarkController:
         self,
         bookmark_adapter: BookmarkAdapter | None = None,
         processor: BookmarkProcessor | None = None,
+        persistence_manager: PersistenceManager | None = None,
     ):
         """
         Initialize the bookmark controller.
@@ -44,9 +47,11 @@ class BookmarkController:
         Args:
             bookmark_adapter: Adapter for retrieving bookmarks (created if None)
             processor: Bookmark processor for the pipeline (created if None)
+            persistence_manager: Manager for applying changes to Safari
         """
         self.bookmark_adapter = bookmark_adapter or BookmarkAdapter()
         self.processor = processor
+        self.persistence_manager = persistence_manager
         self._processor_context: BookmarkProcessor | None = None
         self._manages_processor_lifecycle = False
 
@@ -273,12 +278,12 @@ class BookmarkController:
 
     def export_taxonomy_to_json(
         self,
-        taxonomy_data: dict,
+        taxonomy_data: dict[str, Any],
         output_path: str | Path,
         include_metadata: bool = True,
     ) -> None:
         """
-        Export taxonomy hierarchy to JSON file.
+        Export generated taxonomy to JSON file.
 
         Args:
             taxonomy_data: Taxonomy dictionary from LLM
@@ -297,25 +302,18 @@ class BookmarkController:
             # Prepare export data (copy to avoid modifying original)
             export_data: dict[str, object] = taxonomy_data.copy()
 
-            if include_metadata and "_metadata" not in export_data:
-                export_data["_metadata"] = {
-                    "export_timestamp": asyncio.get_event_loop().time(),
-                    "format_version": "1.0",
+            if include_metadata:
+                export_data["metadata"] = {
+                    "export_date": datetime.now().isoformat(),
+                    "total_bookmarks": len(taxonomy_data.get("bookmarks", [])),
                 }
 
-            # Write JSON file
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
-
-            folders_list = cast("list[Any]", export_data.get("folders", []))
-            folder_count = len(folders_list)
-            logger.info(
-                f"Exported taxonomy with {folder_count} folders to {output_path}"
-            )
+            output_path.write_text(json.dumps(export_data, indent=2))
+            logger.info(f"Successfully exported taxonomy to {output_path}")
 
         except Exception as e:
             logger.error(f"Failed to export taxonomy to JSON: {e}")
-            raise ControllerError(f"Taxonomy JSON export failed: {e}") from e
+            raise ControllerError(f"JSON export failed: {e}") from e
 
     def export_folder_tree_to_json(
         self, root: FolderNode, output_path: str | Path, include_metadata: bool = True
@@ -338,7 +336,7 @@ class BookmarkController:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Convert FolderNode to dict recursively
-            def folder_to_dict(node: FolderNode) -> dict:
+            def folder_to_dict(node: FolderNode) -> dict[str, Any]:
                 result: dict[str, Any] = {"name": node.name, "children": []}
 
                 for child in node.children:
@@ -362,7 +360,7 @@ class BookmarkController:
                 return result
 
             # Prepare export data
-            export_data = {"tree": folder_to_dict(root)}
+            export_data: dict[str, Any] = {"tree": folder_to_dict(root)}
 
             if include_metadata:
                 # Calculate stats
@@ -404,6 +402,20 @@ class BookmarkController:
                 count += 1
         return count
 
+    async def apply_taxonomy(self, taxonomy_tree: FolderNode) -> None:
+        """
+        Apply the generated taxonomy to Safari bookmarks using the PersistenceManager.
+        """
+        if not self.persistence_manager:
+            raise ControllerError("PersistenceManager not configured.")
+
+        if self.persistence_manager.dry_run:
+            logger.info("Dry run: Skipping application of taxonomy.")
+            return
+
+        logger.info("Applying generated taxonomy to Safari.")
+        await self.persistence_manager.apply_taxonomy(taxonomy_tree)
+
 
 # Convenience function for quick metadata aggregation
 async def aggregate_bookmark_metadata(
@@ -413,7 +425,10 @@ async def aggregate_bookmark_metadata(
     use_cache: bool = True,
 ) -> list[LLMMetadata]:
     """
-    Convenience function to aggregate bookmark metadata.
+    High-level convenience function to run the metadata aggregation pipeline.
+
+    This function provides a simplified interface for retrieving and processing
+    bookmark metadata.
 
     Args:
         max_bookmarks: Maximum number of bookmarks to process

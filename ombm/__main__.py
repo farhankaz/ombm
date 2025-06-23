@@ -1,12 +1,17 @@
 """Main CLI entrypoint for OMBM."""
 
+import asyncio
 from typing import Annotated
 
 import typer
 from rich.console import Console
 
 from ombm import __version__
+from ombm.controller import BookmarkController
 from ombm.logging import configure_logging, get_logger
+from ombm.persistence import PersistenceManager
+from ombm.renderer import TreeRenderer
+from ombm.tree_builder import TaxonomyParser
 
 app = typer.Typer(
     name="ombm",
@@ -115,7 +120,7 @@ def organize(
     logger.info(
         "Starting OMBM",
         version=__version__,
-        max_bookmarks=max_bookmarks if max_bookmarks > 0 else None,
+        max_bookmarks=max_bookmarks if max_bookmarks > 0 else "unlimited",
         concurrency=concurrency,
         model=model,
         save_mode=save,
@@ -156,11 +161,78 @@ def organize(
         console.print("📊 Performance profiling enabled")
         logger.info("Performance profiling enabled")
 
-    # TODO: Implement actual bookmark organization logic
-    console.print("\n🚧 Core functionality not yet implemented")
-    console.print("This is a placeholder for the bookmark organization pipeline.")
+    try:
+        asyncio.run(
+            run_organization_pipeline(
+                max_bookmarks=max_bookmarks,
+                concurrency=concurrency,
+                save=save,
+                json_out=json_out,
+                force_refresh=not no_scrape,
+            )
+        )
+    except Exception as e:
+        logger.error("An unexpected error occurred", error=e, exc_info=True)
+        console.print(f"[bold red]Error: {e}[/bold red]")
+        raise typer.Exit(code=1) from e
 
-    logger.info("Core functionality placeholder - implementation pending")
+
+async def run_organization_pipeline(
+    max_bookmarks: int,
+    concurrency: int,
+    save: bool,
+    json_out: str,
+    force_refresh: bool,
+) -> None:
+    """The main async pipeline for organizing bookmarks."""
+    console = Console()
+
+    persistence_manager = PersistenceManager(dry_run=not save)
+
+    async with BookmarkController(
+        persistence_manager=persistence_manager
+    ) as controller:
+        # Step 1: Aggregate metadata
+        console.print("\n[bold]Step 1: Processing bookmarks...[/bold]")
+        metadata_list = await controller.aggregate_metadata_collection(
+            max_bookmarks=max_bookmarks if max_bookmarks > 0 else None,
+            concurrency=concurrency,
+            force_refresh=force_refresh,
+        )
+
+        if not metadata_list:
+            console.print("[yellow]No bookmarks to process. Exiting.[/yellow]")
+            return
+
+        # Step 2: Generate Taxonomy
+        console.print("[bold]Step 2: Generating taxonomy...[/bold]")
+        if controller.processor and controller.processor._llm_service:
+            taxonomy_json = await controller.processor._llm_service.propose_taxonomy(
+                metadata_list
+            )
+            # Step 3: Parse taxonomy into a tree structure
+            console.print("[bold]Step 3: Building folder tree...[/bold]")
+            parser = TaxonomyParser()
+            taxonomy_tree = parser.parse_taxonomy(taxonomy_json, metadata_list)
+
+            # Step 4: Render the output tree
+            console.print("\n[bold green]Proposed Organization:[/bold green]")
+            renderer = TreeRenderer()
+            renderer.render_tree(taxonomy_tree)
+
+            # Step 5: Save to Safari if requested
+            if save:
+                console.print("\n[bold]Step 4: Saving changes to Safari...[/bold]")
+                await controller.apply_taxonomy(taxonomy_tree)
+                console.print("[green]Changes saved successfully![/green]")
+
+            # Step 6: Export to JSON if requested
+            if json_out:
+                console.print(f"\n[bold]Exporting tree to {json_out}...[/bold]")
+                controller.export_folder_tree_to_json(taxonomy_tree, json_out)
+                console.print(f"[green]Successfully exported to {json_out}[/green]")
+        else:
+            console.print("[red]Error: Processor not available.[/red]")
 
 
 if __name__ == "__main__":

@@ -142,9 +142,9 @@ Use this markdown table as a living checklist. Update **Owner**, **Status**, and
 | T‑24 | Tree model parser                     | P1  | Cline | 🟢     | Completed: TaxonomyParser converts JSON to FolderNode structures, 91% coverage |
 | T‑25 | Rich Tree renderer                    | P2  | Cline | 🟢     | Completed: TreeRenderer with beautiful tree visualization, 100% coverage |
 | T‑26 | `--json-out` option                   | P2  | Cline | 🟢     | Completed: JSON export for metadata, taxonomy, and folder trees |
-| T‑31 | AppleScript generator templates       | P2  |       | ⚪️     |       |
-| T‑32 | Persistence manager module            | P1  |       | ⚪️     |       |
-| T‑33 | Undo snapshot backup                  | P2  |       | ⚪️     |       |
+| T‑31 | AppleScript generator templates       | P2  | Cline | 🟢     | Completed: .applescript.j2 templates for create, move, and export operations |
+| T‑32 | Persistence manager module            | P1  | Cline | 🟢     | Completed: PersistenceManager executes AppleScript, integrated with CLI `--save` flag |
+| T‑33 | Undo snapshot backup                  | P2  | Cline | 🟢     | Completed: Creates timestamped backup of Bookmarks.plist before saving changes |
 | T‑41 | Verbose & quiet modes                 | P2  |       | ⚪️     |       |
 | T‑42 | Progress bars                         | P3  |       | ⚪️     |       |
 | T‑43 | Keychain integration                  | P2  |       | ⚪️     |       |
