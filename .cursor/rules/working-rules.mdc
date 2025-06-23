@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Instructions and practices
+
+* Be strategic about implemementing unit tests.  Do not spent time writing unit tests to trivial utilies or logic.
+* Ensure all unit tests pass before creating git commits
+* Ensure all task acceptance criteria is being met before creating a git commit for a task.
+* When working on a task, only do work related to the task.  Do not proceed to other tasks.  Only work on the requested task.
+* When task is complete, please make sure the task is marked complete in docs/plan.md.
+* Make sure all ruff linter errors are cleared before commits.  Also make sure code is formatted using black before each commit. Make sure  `ruff format --check .` command is run successfully before each commit.  Also make sure `mypy ombm/` command is run successfully before each commit.
+* When asked to work on an entire milestone or group of tasks, work on tasks sequentially and follow the rules to working on individual tasks:  ensure acceptance criteria is met, all unit tests pass, update status in docs/plan.md, and create git commit for the task before moving onto the next task.
