@@ -86,7 +86,9 @@ class BookmarkProcessor:
 
         return self
 
-    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: object) -> None:
+    async def __aexit__(
+        self, exc_type: type | None, exc_val: Exception | None, exc_tb: object
+    ) -> None:
         """Async context manager exit."""
         if self._scraper is not None:
             await self._scraper.__aexit__(exc_type, exc_val, exc_tb)
@@ -232,7 +234,8 @@ class BookmarkProcessor:
             else:
                 # We know result is ProcessingResult here due to isinstance check above
                 from typing import cast
-                processed_results.append(cast(ProcessingResult, result))
+
+                processed_results.append(cast("ProcessingResult", result))
 
         # Log summary
         successful = sum(1 for r in processed_results if r.success)
